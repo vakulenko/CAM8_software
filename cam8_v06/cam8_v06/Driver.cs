@@ -29,11 +29,6 @@ using ASCOM.DeviceInterface;
 using System.Globalization;
 using System.Collections;
 
-// work with files
-using System.IO;
-// class savings
-using System.Xml.Serialization;
-
 namespace ASCOM.cam8_v06
 {
     /// <summary>
@@ -42,23 +37,6 @@ namespace ASCOM.cam8_v06
     [Guid("7e94c8a5-48a7-4395-9873-681f631fc9ef")]
     [ClassInterface(ClassInterfaceType.None)]
 
-    /// <summary>
-    /// Class for saving settings (serializing)
-    /// </summary>
-    public class iniSettingsClass
-    {
-        public short gain;
-        public short offset;
-        public bool onTop;
-
-        public iniSettingsClass()
-        {
-            gain = 0;
-            offset = 0;
-            onTop = false;
-        }
-    }
-
     public class Camera : ICameraV2
     {
         /// <summary>
@@ -66,15 +44,25 @@ namespace ASCOM.cam8_v06
         /// The DeviceID is used by ASCOM applications to load the driver at runtime.
         /// </summary>
         internal static string driverID = "ASCOM.cam8_v06.Camera";
-        // TODO Change the descriptive string for your driver then remove this line
+
         /// <summary>
         /// Driver description that displays in the ASCOM Chooser.
         /// </summary>
         private static string driverDescription = "Cam8 v.0.6 ASCOM Driver";
 
+        //parameters fro ASCOM profile read/write
         internal static string traceStateProfileName = "Trace Level";
+        internal static string gainStateProfileName = "gain";
+        internal static string offsetStateProfileName = "offset";
+        internal static string onTopStateProfileName = "onTop";
         internal static string traceStateDefault = "false";
+        internal static string gainStateDefault = "34";
+        internal static string offsetStateDefault = "-7";
+        internal static string onTopStateDefault = "false";
         internal static bool traceState;
+        internal static short gainState;
+        internal static short offsetState;
+        internal static bool onTopState;
 
         /// <summary>
         /// Form, handle gain/offset settings
@@ -152,31 +140,9 @@ namespace ASCOM.cam8_v06
             astroUtilities = new AstroUtils();
             //New form for gain/offset settings
             settingsForm = new camSettings();
-            //extract gain, offset settings
-            tl.LogMessage("Camera", "Reading gain/offset/blevel settings from file " + settingFilePath);
-            tl.LogMessage("Camera", "Also in Win with UAC check /Users/AppData/Local/VirtualStore/Program Files (x86)/Common Files/ASCOM/Camera/cam8/ dir");
-            if (File.Exists(settingFilePath))
-            {
-                try
-                {
-                    using (Stream stream = new FileStream(settingFilePath, FileMode.Open))
-                    {
-                        XmlSerializer serializer = new XmlSerializer(typeof(iniSettingsClass));
-
-                        iniSettingsClass iniSettings = (iniSettingsClass)serializer.Deserialize(stream);
-                        settingsForm.gain = iniSettings.gain;
-                        settingsForm.offset = iniSettings.offset;
-                        settingsForm.onTop = iniSettings.onTop;
-                    }
-                }
-                catch
-                {
-                    settingsForm.gain = 0;
-                    settingsForm.offset = 0;
-                    settingsForm.onTop = false;
-                }
-            }
-            tl.LogMessage("Camera", "Read gain/offset/blevel settings from file; gain=" + settingsForm.gain.ToString() + " offset=" + settingsForm.offset.ToString() + " onTop=" + settingsForm.onTop.ToString());
+            settingsForm.gain = gainState;
+            settingsForm.offset = offsetState;
+            settingsForm.onTop = onTopState;          
             tl.LogMessage("Camera", "Completed initialisation");
         }
 
@@ -292,6 +258,8 @@ namespace ASCOM.cam8_v06
                     }
                     tl.LogMessage("Connected Set", "connectedState=false");
                     connectedState = false;
+                    //save settings for ASCOM profile
+                    WriteProfile();
                     settingsForm.Hide();
                 }
             }
@@ -995,22 +963,12 @@ namespace ASCOM.cam8_v06
                 tl.LogMessage("StartExposure", "Cant set offset to cam8");
                 throw new ASCOM.InvalidOperationException("Cant set offset to cam8");
             }
-            //save gain, offset settings
-            tl.LogMessage("StartExposure", "Saving gain/offset/blevel settings to " + settingFilePath);
-            tl.LogMessage("StartExposure", "Also in Win with UAC check /Users/AppData/Local/VirtualStore/Program Files (x86)/Common Files/ASCOM/Camera/cam8/ dir");
-            tl.LogMessage("StartExposure", "Saving gain/offset/blevel settings to file; gain=" + settingsForm.gain.ToString() + " offset=" + settingsForm.offset.ToString() + " onTop=" + settingsForm.onTop.ToString());
-            iniSettingsClass iniSettings = new iniSettingsClass();
-            iniSettings.gain = settingsForm.gain;
-            iniSettings.offset = settingsForm.offset;
-            iniSettings.onTop = settingsForm.onTop;
-            using (Stream writer = new FileStream(settingFilePath, FileMode.Create))
-            {
-                XmlSerializer serializer = new XmlSerializer(typeof(iniSettingsClass));
-                serializer.Serialize(writer, iniSettings);
-            }
             //Save parameters
             cameraLastExposureDuration = Duration;
             exposureStart = DateTime.Now;
+            gainState = settingsForm.gain;
+            offsetState = settingsForm.offset;
+            onTopState = settingsForm.onTop;
             //start exposure
             tl.LogMessage("StartExposure", "Call cameraStartExposure from cam8ll06.dll, args: ");
             tl.LogMessage("StartExposure", " cameraBinX=" + cameraBinX.ToString() +
@@ -1187,6 +1145,9 @@ namespace ASCOM.cam8_v06
             {
                 driverProfile.DeviceType = "Camera";
                 traceState = Convert.ToBoolean(driverProfile.GetValue(driverID, traceStateProfileName, string.Empty, traceStateDefault));
+                gainState = Convert.ToInt16(driverProfile.GetValue(driverID, gainStateProfileName, string.Empty, gainStateDefault));
+                offsetState = Convert.ToInt16(driverProfile.GetValue(driverID, offsetStateProfileName, string.Empty, offsetStateDefault));
+                onTopState = Convert.ToBoolean(driverProfile.GetValue(driverID, onTopStateProfileName, string.Empty, onTopStateDefault));
             }
         }
 
@@ -1199,6 +1160,9 @@ namespace ASCOM.cam8_v06
             {
                 driverProfile.DeviceType = "Camera";
                 driverProfile.WriteValue(driverID, traceStateProfileName, traceState.ToString());
+                driverProfile.WriteValue(driverID, gainStateProfileName, gainState.ToString());
+                driverProfile.WriteValue(driverID, offsetStateProfileName, offsetState.ToString());
+                driverProfile.WriteValue(driverID, onTopStateProfileName, onTopState.ToString());
             }
         }
 

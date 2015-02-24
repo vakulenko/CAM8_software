@@ -69,7 +69,7 @@ mBin : integer;
 //переменная-флаг, отображает готовность к считыванию кадра
 imageReady : boolean = false;
 //переменная-состояние камеры
-cameraState : integer = 0;
+cameraState : integer = cameraIdle;
 //таймер экспозиции и 15В таймер
 exposureTimer, Timer15V : integer;
 //таймер для проверки переменной-флага CanStopExposureCount
@@ -421,8 +421,8 @@ begin
             end;
           FT_Out_Buffer[adress+0]:=dout[0]+$10;
           FT_Out_Buffer[adress+1]:=dout[1]+$10;
-          FT_Out_Buffer[adress+2]:=dout[2];//+$10;
-          FT_Out_Buffer[adress+3]:=dout[3];//+$10;
+          FT_Out_Buffer[adress+2]:=dout[2];
+          FT_Out_Buffer[adress+3]:=dout[3];
           inc(adress,4);
           for x:=0 to 4*mdeltX-2 do
             begin
@@ -475,8 +475,8 @@ begin
               inc(adress,10);
             end;
         end;
-      FT_Out_Buffer[adress+0]:=dout[0];//+$10;
-      FT_Out_Buffer[adress+1]:=dout[1];//+$10;
+      FT_Out_Buffer[adress+0]:=dout[0];
+      FT_Out_Buffer[adress+1]:=dout[1];
       FT_Out_Buffer[adress+2]:=dout[2]+$10;
       FT_Out_Buffer[adress+3]:=dout[3]+$10;
       inc(adress,4);
@@ -503,6 +503,8 @@ begin
   Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
   readframe (mBin, 1000);
   imageReady := true;
+  cameraState:=cameraDownload;
+  cameraState:=cameraIdle;
   canStopExposureNow := true;
 end;
 
@@ -545,27 +547,24 @@ end;
 //Connect camera, return bool result
 //Опрос подключенных устройств и инициализация AD9822
 function cameraConnect () : WordBool;  stdcall; export;
-var  FT_flag, FT_OP_flag : boolean;
-I : Integer;
+var  FT_OP_flag : boolean;
 begin
-  FT_flag:=false;
   FT_OP_flag:=true;
-  GetFTDeviceCount;
-  I := FT_Device_Count-1;
-  while I >= 0 do
-    begin
-      GetFTDeviceSerialNo(I);
-      //если обнаружен cam81 - подключаем
-      if pos('CAM8',FT_Device_String) <> 0 then FT_flag:=true;
-      GetFTDeviceDescription(I);
-      Dec(I);
-    end;
-  if FT_flag then
+  if (FT_OP_flag) then
     begin
       if Open_USB_Device_By_Serial_Number(FT_CAM8A,'CAM8A') <> FT_OK then FT_OP_flag := false;
+    end;
+  if (FT_OP_flag) then
+    begin
       if Open_USB_Device_By_Serial_Number(FT_CAM8B,'CAM8B')  <> FT_OK then FT_OP_flag := false;
+    end;
+  if (FT_OP_flag) then
+    begin
       // BitMode
       if Set_USB_Device_BitMode(FT_CAM8B,$ff, $01)  <> FT_OK then FT_OP_flag := false;
+    end;
+  if (FT_OP_flag) then
+    begin
       //максимальное быстродействие
       Set_USB_Device_LatencyTimer(FT_CAM8B,2);
       Set_USB_Device_LatencyTimer(FT_CAM8A,2);
@@ -584,8 +583,10 @@ begin
       HC595($f9);
       Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
     end;
-  isConnected := FT_flag and FT_OP_flag;
-  Result := FT_flag and FT_OP_flag;
+  isConnected := FT_OP_flag;
+  cameraState := cameraIdle;
+  if(FT_OP_flag=false) then cameraState := cameraError;
+  Result := isConnected;
 end;
 
 //Disconnect camera, return bool result
@@ -668,6 +669,8 @@ begin
       cameraState := cameraReading;
       readframe (mBin,round(Duration*1000));
       imageReady := true;
+      cameraState:=cameraDownload;
+      cameraState:=cameraIdle;
     end;
   Result := true;
 end;
@@ -700,8 +703,6 @@ end;
 //Get back pointer to image
 function cameraGetImage : dword; stdcall; export;
 begin
-  cameraState := cameraDownload;
-  cameraState := cameraIdle;
   Result := dword(@bufim);
 end;
 
