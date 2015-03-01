@@ -100,5 +100,10 @@ namespace ASCOM.cam8_v06
         {
             offsetTrackBar.Value = offset = (short)offsetNumUpDown.Value;
         }
+
+        private void camSettings_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+        }
     }
 }

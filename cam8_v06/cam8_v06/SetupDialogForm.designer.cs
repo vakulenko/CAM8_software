@@ -116,6 +116,8 @@ namespace ASCOM.cam8_v06
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SetupDialogForm";
+            this.ShowIcon = false;
+            this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "ASCOM cam8 v.0.6 driver setup";

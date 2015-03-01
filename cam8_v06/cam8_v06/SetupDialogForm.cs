@@ -41,14 +41,17 @@ namespace ASCOM.cam8_v06
                 {
                     for (UInt32 i = 0; i < ftdiDeviceCount; i++)
                     {
-                        AvailableDevicesListBox.Items.Add("Device Index: " + i.ToString());
-                        AvailableDevicesListBox.Items.Add("Flags: " + String.Format("{0:x}", ftdiDeviceList[i].Flags));
-                        AvailableDevicesListBox.Items.Add("Type: " + ftdiDeviceList[i].Type.ToString());
-                        AvailableDevicesListBox.Items.Add("ID: " + String.Format("{0:x}", ftdiDeviceList[i].ID));
-                        AvailableDevicesListBox.Items.Add("Location ID: " + String.Format("{0:x}", ftdiDeviceList[i].LocId));
-                        AvailableDevicesListBox.Items.Add("Serial Number: " + ftdiDeviceList[i].SerialNumber.ToString());
-                        AvailableDevicesListBox.Items.Add("Description: " + ftdiDeviceList[i].Description.ToString());
-                        AvailableDevicesListBox.Items.Add("");
+                        if (ftdiDeviceList[i].SerialNumber.Contains("CAM8"))
+                        {
+                            AvailableDevicesListBox.Items.Add("Device Index: " + i.ToString());
+                            AvailableDevicesListBox.Items.Add("Flags: " + String.Format("{0:x}", ftdiDeviceList[i].Flags));
+                            AvailableDevicesListBox.Items.Add("Type: " + ftdiDeviceList[i].Type.ToString());
+                            AvailableDevicesListBox.Items.Add("ID: " + String.Format("{0:x}", ftdiDeviceList[i].ID));
+                            AvailableDevicesListBox.Items.Add("Location ID: " + String.Format("{0:x}", ftdiDeviceList[i].LocId));
+                            AvailableDevicesListBox.Items.Add("Serial Number: " + ftdiDeviceList[i].SerialNumber.ToString());
+                            AvailableDevicesListBox.Items.Add("Description: " + ftdiDeviceList[i].Description.ToString());
+                            AvailableDevicesListBox.Items.Add("");
+                        }
                     }
                 }
                 else throw new ASCOM.InvalidValueException("Error getting parameters from FTDI devices");

@@ -70,11 +70,6 @@ namespace ASCOM.cam8_v06
         private camSettings settingsForm;
 
         /// <summary>
-        /// FilePath to settings XML (save gain/offset value)
-        /// </summary>
-        private string settingFilePath;
-
-        /// <summary>
         /// Private variable to hold the connected state
         /// </summary>
         private bool connectedState;
@@ -123,11 +118,7 @@ namespace ASCOM.cam8_v06
         public Camera()
         {
             // Read device configuration from the ASCOM Profile store
-            ReadProfile();
-            //Get path to Common Files directory
-            string arch = System.Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE").ToString();
-            if (arch.IndexOf("86") != -1) settingFilePath = Environment.ExpandEnvironmentVariables("%CommonProgramFiles%\\ASCOM\\Camera\\cam8\\cam8_settings.xml");
-            else settingFilePath = Environment.ExpandEnvironmentVariables("%CommonProgramFiles(x86)%\\ASCOM\\Camera\\cam8\\cam8_settings.xml");
+            ReadProfile();            
             //Init debug logger
             tl = new TraceLogger("", "cam8_v06");
             tl.Enabled = traceState;
@@ -161,11 +152,8 @@ namespace ASCOM.cam8_v06
         /// </summary>
         public void SetupDialog()
         {
-            // consider only showing the setup dialog if not connected
-            // or call a different dialog if connected
-            if (IsConnected)
-                System.Windows.Forms.MessageBox.Show("Already connected, just press OK");
-
+            // show camera settings form
+            if (IsConnected) return;  
             using (SetupDialogForm F = new SetupDialogForm())
             {
                 var result = F.ShowDialog();
