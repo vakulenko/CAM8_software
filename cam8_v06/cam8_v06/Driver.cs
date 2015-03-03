@@ -28,6 +28,8 @@ using ASCOM.Utilities;
 using ASCOM.DeviceInterface;
 using System.Globalization;
 using System.Collections;
+//for COM PORT
+using System.IO.Ports;
 
 namespace ASCOM.cam8_v06
 {
@@ -36,6 +38,114 @@ namespace ASCOM.cam8_v06
     /// </summary>
     [Guid("7e94c8a5-48a7-4395-9873-681f631fc9ef")]
     [ClassInterface(ClassInterfaceType.None)]
+
+    public class TECControl
+    {
+        private const int baudrate = 9600;
+        private const byte bufferSize = 11;
+        private const byte responcePacketSize = 11;
+        private const byte infoPacketSize = 6;
+        private const byte hwRevision = 0x01;
+        private const byte swRevision = 0x01;
+        private const byte sensorCount = 0x02;
+        private const byte setCount = 0x01;
+        private const double minSetTemp = -50.0;
+        private const double maxSetTemp = 50.0;
+        private const int tempOffset = 128;
+        private const byte tecOn = 0x01;
+        private const byte tecOff = 0x00;
+
+        private SerialPort tecComPort;
+        private double tecCCDTemp=20.0;
+        private double tecHeatsinkTemp=30.0;
+        private double tecSetTemp = 10.0;
+        private double tecCoolerPower=40;
+        private bool tecCoolenOn=false;
+        private bool tecIsConnected=false;
+        
+        private byte[] rx_buf;
+
+        public TECControl(int comPort)
+        {
+            tecComPort = new SerialPort("COM"+comPort.ToString(), baudrate, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
+        }       
+
+        public bool connect
+        {
+            get
+            {
+                return tecIsConnected;
+            }
+            set
+            {
+                tecIsConnected = value;
+            }
+        }
+
+        public double ccdTemperature
+        {
+            get
+            {
+                return tecCCDTemp;
+            }
+        }
+
+        public double setccdTemperature
+        {
+            get
+            {
+                return tecSetTemp;
+            }
+            set
+            {
+                tecSetTemp = value;
+            }
+        }
+
+        public double heatsinkTemperature
+        {
+            get
+            {
+                return tecHeatsinkTemp;
+            }
+        }
+
+        public double maxSetTemperature
+        {
+            get
+            {
+                return maxSetTemp;
+            }
+        }
+
+        public double minSetTemperature
+        {
+            get
+            {
+                return minSetTemp;
+            }
+        }
+
+        public bool coolerOn
+        {
+            get
+            {
+                return tecCoolenOn;
+            }
+            set
+            {
+                tecCoolenOn = value;
+            }
+        }
+
+        public double coolerPower
+        {
+            get
+            {
+                return tecCoolerPower;
+            }
+        }
+    }
 
     public class Camera : ICameraV2
     {
@@ -55,24 +165,32 @@ namespace ASCOM.cam8_v06
         internal static string gainStateProfileName = "gain";
         internal static string offsetStateProfileName = "offset";
         internal static string onTopStateProfileName = "onTop";
+        internal static string coolerEnabledStateProfileName = "coolerEnabled";
+        internal static string coolerComPortStateProfileName = "coolerComPort";
         internal static string traceStateDefault = "false";
         internal static string gainStateDefault = "34";
         internal static string offsetStateDefault = "-7";
         internal static string onTopStateDefault = "false";
+        internal static string coolerEnabledStateDefault = "false";
+        internal static string coolerComPortStateDefault = "1";
         internal static bool traceState;
         internal static short gainState;
         internal static short offsetState;
         internal static bool onTopState;
-
+        internal static bool coolerEnabledState;
+        internal static int coolerComPortState;
+            
         /// <summary>
         /// Form, handle gain/offset settings
         /// </summary>
         private camSettings settingsForm;
 
+        private TECControl tec;
+
         /// <summary>
         /// Private variable to hold the connected state
         /// </summary>
-        private bool connectedState;
+        private bool cameraConnectedState;
 
         /// <summary>
         /// Private variable to hold an ASCOM Utilities object
@@ -124,7 +242,7 @@ namespace ASCOM.cam8_v06
             tl.Enabled = traceState;
             tl.LogMessage("Camera", "Starting initialisation");
             // Initialise connected to false
-            connectedState = false;
+            cameraConnectedState = false;
             //Initialise util object
             utilities = new Util();
             // Initialise astro utilities object
@@ -133,7 +251,8 @@ namespace ASCOM.cam8_v06
             settingsForm = new camSettings();
             settingsForm.gain = gainState;
             settingsForm.offset = offsetState;
-            settingsForm.onTop = onTopState;          
+            settingsForm.onTop = onTopState;
+            tec = new TECControl(coolerComPortState);
             tl.LogMessage("Camera", "Completed initialisation");
         }
 
@@ -208,7 +327,7 @@ namespace ASCOM.cam8_v06
             utilities = null;
             astroUtilities.Dispose();
             astroUtilities = null;
-            settingsForm.Dispose();
+            settingsForm.Dispose();            
         }
 
         public bool Connected
@@ -221,9 +340,7 @@ namespace ASCOM.cam8_v06
             set
             {
                 tl.LogMessage("Connected Set", value.ToString());
-                if (value == IsConnected)
-                    return;
-
+                if (value == IsConnected) return;
                 if (value)
                 {
                     tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from cam8ll06.dll");
@@ -232,8 +349,13 @@ namespace ASCOM.cam8_v06
                         tl.LogMessage("Connected Set", "Cant connect to cam8");
                         throw new ASCOM.NotConnectedException("Cant connect to cam8");
                     }
-                    tl.LogMessage("Connected Set", "connectedState=true");
-                    connectedState = true;
+                    if (coolerEnabledState)
+                    {
+                        tl.LogMessage("Connected Set", "TEC Connect to module");
+                        tec.connect = true;
+                    }
+                    tl.LogMessage("Connected Set", "cameraConnectedState=true");
+                    cameraConnectedState = true;
                     settingsForm.Show();
                 }
                 else
@@ -244,8 +366,13 @@ namespace ASCOM.cam8_v06
                         tl.LogMessage("Connected Set", "Cant disconnect cam8");
                         throw new ASCOM.NotConnectedException("Cant disconnect cam8");
                     }
-                    tl.LogMessage("Connected Set", "connectedState=false");
-                    connectedState = false;
+                    if (coolerEnabledState)
+                    {
+                        tl.LogMessage("Connected Set", "TEC Disconnect to module");
+                        tec.connect = false;
+                    }
+                    tl.LogMessage("Connected Set", "cameraConnectedState=false");                    
+                    cameraConnectedState = false;
                     //save settings for ASCOM profile
                     WriteProfile();
                     settingsForm.Hide();
@@ -400,8 +527,16 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("CCDTemperature Get", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("CCDTemperature", false);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("CCDTemperature Get", "ccdTemp=" + tec.ccdTemperature.ToString());
+                    return tec.ccdTemperature;
+                }
+                else
+                {
+                    tl.LogMessage("CCDTemperature Get", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("CCDTemperature", false);
+                }
             }
         }
 
@@ -495,8 +630,16 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("CanGetCoolerPower Get", false.ToString());
-                return false;
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("CanGetCoolerPower Get", "true");
+                    return true;
+                }
+                else
+                {
+                    tl.LogMessage("CanGetCoolerPower Get", "false");
+                    return false;
+                }
             }
         }
 
@@ -513,8 +656,16 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("CanSetCCDTemperature Get", false.ToString());
-                return false;
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("CanSetCCDTemperature Get", "true");
+                    return true;
+                }
+                else
+                {
+                    tl.LogMessage("CanSetCCDTemperature Get", "false");
+                    return false;
+                }
             }
         }
 
@@ -531,13 +682,29 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("CoolerOn Get Get", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("CoolerOn", false);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("CoolerOn Get", "coolerOn=" + tec.coolerOn.ToString());
+                    return tec.coolerOn;
+                }
+                else
+                {
+                    tl.LogMessage("CoolerOn Get", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("CoolerOn", false);
+                }
             }
             set
             {
-                tl.LogMessage("CoolerOn Set Get", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("CoolerOn", true);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("CoolerOn Set", "coolerOn="+value.ToString());
+                    tec.coolerOn=value;
+                }
+                else
+                {
+                    tl.LogMessage("CoolerOn Set Get", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("CoolerOn", true);
+                }
             }
         }
 
@@ -545,8 +712,16 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("CoolerPower Get Get", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("CoolerPower", false);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("CoolerPower Get", "coolerPower=" + tec.coolerPower.ToString());
+                    return tec.coolerPower;
+                }
+                else
+                {            
+                    tl.LogMessage("CoolerPower Get", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("CoolerPower", false);
+                }
             }
         }
 
@@ -663,8 +838,16 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("HeatSinkTemperature Get", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("HeatSinkTemperature", false);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("HeatSinkTemperature Get", "heatsinkTemp=" + tec.heatsinkTemperature.ToString());
+                    return tec.heatsinkTemperature;
+                }
+                else
+                {
+                    tl.LogMessage("HeatSinkTemperature Get", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("HeatSinkTemperature", false);
+                }
             }
         }
 
@@ -909,13 +1092,34 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("SetCCDTemperature Get", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("SetCCDTemperature", false);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("SetCCDTemperature Get", "heatsinkTemp=" + tec.heatsinkTemperature.ToString());
+                    return tec.setccdTemperature;
+                }
+                else
+                {
+                    tl.LogMessage("SetCCDTemperature Get", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("SetCCDTemperature", false);
+                }
             }
             set
             {
-                tl.LogMessage("SetCCDTemperature Set", "Not implemented");
-                throw new ASCOM.PropertyNotImplementedException("SetCCDTemperature", true);
+                if ((coolerEnabledState) && (tec.connect))
+                {
+                    tl.LogMessage("SetCCDTemperature Set", "setCCDTemp=" + value.ToString());
+                    if ((value < tec.minSetTemperature)||(value>tec.maxSetTemperature))
+                    {
+                        tl.LogMessage("SetCCDTemperature Set", "InvalidValueException SetCCDTemperature must be in range [minSetTemp;maxSetTemp]");
+                        throw new InvalidValueException("SetCCDTemperature Set", value.ToString(), "SetCCDTemperature must be in range [-50;50]");
+                    }                    
+                    tec.setccdTemperature = value;
+                }
+                else
+                {
+                    tl.LogMessage("SetCCDTemperature Set", "Not implemented");
+                    throw new ASCOM.PropertyNotImplementedException("SetCCDTemperature", true);
+                }
             }
         }
 
@@ -1105,9 +1309,9 @@ namespace ASCOM.cam8_v06
             get
             {
                 tl.LogMessage("IsConnected Get", "Call cameraIsConnected from cam8ll06.dll");
-                connectedState = cameraIsConnected();
-                tl.LogMessage("IsConnected Get", "connectedState=" + connectedState.ToString());
-                return connectedState;
+                cameraConnectedState = cameraIsConnected();
+                tl.LogMessage("IsConnected Get", "connectedState=" + cameraConnectedState.ToString());
+                return cameraConnectedState;
             }
         }
 
@@ -1136,6 +1340,8 @@ namespace ASCOM.cam8_v06
                 gainState = Convert.ToInt16(driverProfile.GetValue(driverID, gainStateProfileName, string.Empty, gainStateDefault));
                 offsetState = Convert.ToInt16(driverProfile.GetValue(driverID, offsetStateProfileName, string.Empty, offsetStateDefault));
                 onTopState = Convert.ToBoolean(driverProfile.GetValue(driverID, onTopStateProfileName, string.Empty, onTopStateDefault));
+                coolerEnabledState = Convert.ToBoolean(driverProfile.GetValue(driverID, coolerEnabledStateProfileName, string.Empty, coolerEnabledStateDefault));
+                coolerComPortState = Convert.ToInt16(driverProfile.GetValue(driverID, coolerComPortStateProfileName, string.Empty, coolerComPortStateDefault));
             }
         }
 
@@ -1151,6 +1357,8 @@ namespace ASCOM.cam8_v06
                 driverProfile.WriteValue(driverID, gainStateProfileName, gainState.ToString());
                 driverProfile.WriteValue(driverID, offsetStateProfileName, offsetState.ToString());
                 driverProfile.WriteValue(driverID, onTopStateProfileName, onTopState.ToString());
+                driverProfile.WriteValue(driverID, coolerEnabledStateProfileName, coolerEnabledState.ToString());
+                driverProfile.WriteValue(driverID, coolerComPortStateProfileName, coolerComPortState.ToString());
             }
         }
 

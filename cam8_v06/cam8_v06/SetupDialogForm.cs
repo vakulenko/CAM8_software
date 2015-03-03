@@ -61,13 +61,15 @@ namespace ASCOM.cam8_v06
 
             // Initialise current values of user settings from the ASCOM Profile 
             chkTrace.Checked = Camera.traceState;
+            coolerCheckBox.Checked = Camera.coolerEnabledState;
+            coolerComPortComboBox.SelectedIndex = Camera.coolerComPortState-1;
         }
 
         private void cmdOK_Click(object sender, EventArgs e) // OK button event handler
         {
-            // Place any validation constraint checks here
-
             Camera.traceState = chkTrace.Checked;
+            Camera.coolerEnabledState = coolerCheckBox.Checked;
+            Camera.coolerComPortState = coolerComPortComboBox.SelectedIndex+1;
         }
 
         private void cmdCancel_Click(object sender, EventArgs e) // Cancel button event handler
@@ -90,6 +92,11 @@ namespace ASCOM.cam8_v06
             {
                 MessageBox.Show(other.Message);
             }
+        }
+
+        private void coolerCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            coolerComPortComboBox.Enabled = coolerCheckBox.Checked;
         }
     }
 }

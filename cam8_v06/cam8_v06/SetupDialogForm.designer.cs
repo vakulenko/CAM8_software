@@ -34,16 +34,20 @@ namespace ASCOM.cam8_v06
             this.picASCOM = new System.Windows.Forms.PictureBox();
             this.chkTrace = new System.Windows.Forms.CheckBox();
             this.AvailableDevicesListBox = new System.Windows.Forms.ListBox();
+            this.coolerGroupBox = new System.Windows.Forms.GroupBox();
+            this.coolerComPortComboBox = new System.Windows.Forms.ComboBox();
+            this.coolerCheckBox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
+            this.coolerGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // cmdOK
             // 
             this.cmdOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.cmdOK.Location = new System.Drawing.Point(212, 120);
+            this.cmdOK.Location = new System.Drawing.Point(210, 262);
             this.cmdOK.Name = "cmdOK";
-            this.cmdOK.Size = new System.Drawing.Size(59, 24);
+            this.cmdOK.Size = new System.Drawing.Size(119, 24);
             this.cmdOK.TabIndex = 0;
             this.cmdOK.Text = "OK";
             this.cmdOK.UseVisualStyleBackColor = true;
@@ -53,9 +57,9 @@ namespace ASCOM.cam8_v06
             // 
             this.cmdCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cmdCancel.Location = new System.Drawing.Point(212, 150);
+            this.cmdCancel.Location = new System.Drawing.Point(210, 292);
             this.cmdCancel.Name = "cmdCancel";
-            this.cmdCancel.Size = new System.Drawing.Size(59, 25);
+            this.cmdCancel.Size = new System.Drawing.Size(119, 25);
             this.cmdCancel.TabIndex = 1;
             this.cmdCancel.Text = "Cancel";
             this.cmdCancel.UseVisualStyleBackColor = true;
@@ -74,7 +78,7 @@ namespace ASCOM.cam8_v06
             this.picASCOM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.picASCOM.Cursor = System.Windows.Forms.Cursors.Hand;
             this.picASCOM.Image = global::ASCOM.cam8_v06.Properties.Resources.ASCOM;
-            this.picASCOM.Location = new System.Drawing.Point(218, 27);
+            this.picASCOM.Location = new System.Drawing.Point(242, 59);
             this.picASCOM.Name = "picASCOM";
             this.picASCOM.Size = new System.Drawing.Size(48, 56);
             this.picASCOM.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -86,7 +90,7 @@ namespace ASCOM.cam8_v06
             // chkTrace
             // 
             this.chkTrace.AutoSize = true;
-            this.chkTrace.Location = new System.Drawing.Point(207, 97);
+            this.chkTrace.Location = new System.Drawing.Point(216, 239);
             this.chkTrace.Name = "chkTrace";
             this.chkTrace.Size = new System.Drawing.Size(69, 17);
             this.chkTrace.TabIndex = 6;
@@ -101,11 +105,60 @@ namespace ASCOM.cam8_v06
             this.AvailableDevicesListBox.Size = new System.Drawing.Size(184, 290);
             this.AvailableDevicesListBox.TabIndex = 7;
             // 
+            // coolerGroupBox
+            // 
+            this.coolerGroupBox.Controls.Add(this.coolerComPortComboBox);
+            this.coolerGroupBox.Controls.Add(this.coolerCheckBox);
+            this.coolerGroupBox.Location = new System.Drawing.Point(210, 157);
+            this.coolerGroupBox.Name = "coolerGroupBox";
+            this.coolerGroupBox.Size = new System.Drawing.Size(119, 76);
+            this.coolerGroupBox.TabIndex = 8;
+            this.coolerGroupBox.TabStop = false;
+            this.coolerGroupBox.Text = "Cooling";
+            // 
+            // coolerComPortComboBox
+            // 
+            this.coolerComPortComboBox.Enabled = false;
+            this.coolerComPortComboBox.FormattingEnabled = true;
+            this.coolerComPortComboBox.Items.AddRange(new object[] {
+            "COM1",
+            "COM2",
+            "COM3",
+            "COM4",
+            "COM5",
+            "COM6",
+            "COM7",
+            "COM8",
+            "COM9",
+            "COM10",
+            "COM11",
+            "COM12",
+            "COM13",
+            "COM14",
+            "COM15",
+            "COM16"});
+            this.coolerComPortComboBox.Location = new System.Drawing.Point(6, 42);
+            this.coolerComPortComboBox.Name = "coolerComPortComboBox";
+            this.coolerComPortComboBox.Size = new System.Drawing.Size(87, 21);
+            this.coolerComPortComboBox.TabIndex = 10;
+            // 
+            // coolerCheckBox
+            // 
+            this.coolerCheckBox.AutoSize = true;
+            this.coolerCheckBox.Location = new System.Drawing.Point(6, 19);
+            this.coolerCheckBox.Name = "coolerCheckBox";
+            this.coolerCheckBox.Size = new System.Drawing.Size(97, 17);
+            this.coolerCheckBox.TabIndex = 9;
+            this.coolerCheckBox.Text = "Cooler enabled";
+            this.coolerCheckBox.UseVisualStyleBackColor = true;
+            this.coolerCheckBox.CheckedChanged += new System.EventHandler(this.coolerCheckBox_CheckedChanged);
+            // 
             // SetupDialogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(285, 330);
+            this.ClientSize = new System.Drawing.Size(343, 333);
+            this.Controls.Add(this.coolerGroupBox);
             this.Controls.Add(this.AvailableDevicesListBox);
             this.Controls.Add(this.chkTrace);
             this.Controls.Add(this.picASCOM);
@@ -122,6 +175,8 @@ namespace ASCOM.cam8_v06
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "ASCOM cam8 v.0.6 driver setup";
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).EndInit();
+            this.coolerGroupBox.ResumeLayout(false);
+            this.coolerGroupBox.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -135,6 +190,9 @@ namespace ASCOM.cam8_v06
         private System.Windows.Forms.PictureBox picASCOM;
         private System.Windows.Forms.CheckBox chkTrace;
         private System.Windows.Forms.ListBox AvailableDevicesListBox;
+        private System.Windows.Forms.GroupBox coolerGroupBox;
+        private System.Windows.Forms.ComboBox coolerComPortComboBox;
+        private System.Windows.Forms.CheckBox coolerCheckBox;
     }
 
 }
