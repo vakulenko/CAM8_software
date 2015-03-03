@@ -37,6 +37,7 @@
             this.onTopCheckBox = new System.Windows.Forms.CheckBox();
             this.gainNumUpDown = new System.Windows.Forms.NumericUpDown();
             this.offsetNumUpDown = new System.Windows.Forms.NumericUpDown();
+            this.tecStatusLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.gainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).BeginInit();
@@ -140,11 +141,21 @@
             this.offsetNumUpDown.TabIndex = 43;
             this.offsetNumUpDown.ValueChanged += new System.EventHandler(this.offsetNumUpDown_ValueChanged);
             // 
+            // tecStatusLabel
+            // 
+            this.tecStatusLabel.AutoSize = true;
+            this.tecStatusLabel.Location = new System.Drawing.Point(6, 131);
+            this.tecStatusLabel.Name = "tecStatusLabel";
+            this.tecStatusLabel.Size = new System.Drawing.Size(62, 13);
+            this.tecStatusLabel.TabIndex = 44;
+            this.tecStatusLabel.Text = "TEC status:";
+            // 
             // camSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(230, 134);
+            this.ClientSize = new System.Drawing.Size(230, 160);
+            this.Controls.Add(this.tecStatusLabel);
             this.Controls.Add(this.offsetNumUpDown);
             this.Controls.Add(this.gainNumUpDown);
             this.Controls.Add(this.onTopCheckBox);
@@ -154,8 +165,8 @@
             this.Controls.Add(this.minMaxGainLabel);
             this.Controls.Add(this.offsetLabel);
             this.Controls.Add(this.gainLabel);
-            this.MaximumSize = new System.Drawing.Size(238, 163);
-            this.MinimumSize = new System.Drawing.Size(238, 163);
+            this.MaximumSize = new System.Drawing.Size(238, 189);
+            this.MinimumSize = new System.Drawing.Size(238, 189);
             this.Name = "camSettings";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
@@ -181,5 +192,6 @@
         private System.Windows.Forms.CheckBox onTopCheckBox;
         private System.Windows.Forms.NumericUpDown gainNumUpDown;
         private System.Windows.Forms.NumericUpDown offsetNumUpDown;
+        private System.Windows.Forms.Label tecStatusLabel;
     }
 }

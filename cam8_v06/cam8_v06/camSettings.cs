@@ -63,6 +63,14 @@ namespace ASCOM.cam8_v06
             }
         }
 
+        public string tecStatus
+        {
+            set
+            {
+                tecStatusLabel.Text = "TEC status: " + value;
+            }
+        }
+
         public bool onTop
         {
             get

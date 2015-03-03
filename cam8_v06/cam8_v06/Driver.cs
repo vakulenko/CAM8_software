@@ -30,6 +30,9 @@ using System.Globalization;
 using System.Collections;
 //for COM PORT
 using System.IO.Ports;
+//for pauses
+using System.Threading;
+
 
 namespace ASCOM.cam8_v06
 {
@@ -42,7 +45,7 @@ namespace ASCOM.cam8_v06
     public class TECControl
     {
         private const int baudrate = 9600;
-        private const byte bufferSize = 11;
+        private const byte rxBufferSize = 11;
         private const byte responcePacketSize = 11;
         private const byte infoPacketSize = 6;
         private const byte hwRevision = 0x01;
@@ -55,30 +58,73 @@ namespace ASCOM.cam8_v06
         private const byte tecOn = 0x01;
         private const byte tecOff = 0x00;
 
+        private byte[] infoCmd = { 0x69, 0x9f };
+        private byte[] getCmd = { 0x67, 0x80 };
+        private byte[] setCmd = { 0x73, 0x00, 0x00, 0x00 };
+        private byte[] pwmCmd = { 0x70, 0x00, 0x00 };
+
         private SerialPort tecComPort;
-        private double tecCCDTemp=20.0;
-        private double tecHeatsinkTemp=30.0;
-        private double tecSetTemp = 10.0;
-        private double tecCoolerPower=40;
-        private bool tecCoolenOn=false;
-        private bool tecIsConnected=false;
-        
-        private byte[] rx_buf;
+        private double tecCCDTemp = 0.0;
+        private double tecHeatsinkTemp = 0.0;
+        private double tecSetTemp = 0.0;
+        private double tecCoolerPower = 0.0;
+        private int tecErrorCode = 0;
+        private bool tecCoolenOn = false;
+        private bool tecIsConnected = false;
+
+        private byte[] rxBuf;
 
         public TECControl(int comPort)
         {
-            tecComPort = new SerialPort("COM"+comPort.ToString(), baudrate, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
-        }       
+            tecComPort = new SerialPort("COM" + comPort.ToString(), baudrate, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
+            rxBuf = new byte[rxBufferSize];
+        }
 
         public bool connect
         {
             get
-            {
+            {                
                 return tecIsConnected;
             }
             set
             {
-                tecIsConnected = value;
+                if (value)
+                {
+                    try
+                    {
+                        tecComPort.Open();
+                        tecComPort.DiscardInBuffer();
+                        tecComPort.DiscardOutBuffer();
+                        tecComPort.ReadTimeout = 500;
+                        tecComPort.WriteTimeout = 500;
+                    }
+                    catch
+                    {
+                        tecIsConnected = false;                        
+                        return;
+                    }
+                    tecSendCommand(infoCmd);
+                    Thread.Sleep(200);
+                    if (tecReadPacket() == 0)
+                    {
+                        tecIsConnected = false;
+                        return;
+                    }
+                    tecIsConnected = value;
+                }
+                else
+                {
+                    tecComPort.Close();
+                    tecIsConnected = value;
+                }
+            }
+        }
+
+        public int tecError
+        {
+            get
+            {
+                return tecErrorCode;
             }
         }
 
@@ -86,6 +132,8 @@ namespace ASCOM.cam8_v06
         {
             get
             {
+                tecReadPacket();
+                tecSendCommand(getCmd);
                 return tecCCDTemp;
             }
         }
@@ -98,7 +146,16 @@ namespace ASCOM.cam8_v06
             }
             set
             {
+                if ((value < this.minSetTemperature) || (value > this.maxSetTemperature)) return;
+                short tmp;
                 tecSetTemp = value;
+                tmp = (short)((value + tempOffset) * 10);
+                setCmd[1] = (byte)((tmp >> 8) & 0x00ff);
+                setCmd[2] = (byte)(tmp & 0x00ff);
+                setCmd[3] = crc8_block(setCmd, 3);
+                tecSendCommand(setCmd);
+                Thread.Sleep(1000);
+                
             }
         }
 
@@ -135,6 +192,11 @@ namespace ASCOM.cam8_v06
             set
             {
                 tecCoolenOn = value;
+                if (value) pwmCmd[1] = 0x01;
+                else pwmCmd[1] = 0x00;
+                pwmCmd[2] = crc8_block(pwmCmd, 2);
+                tecSendCommand(pwmCmd);
+                Thread.Sleep(1000);
             }
         }
 
@@ -143,6 +205,60 @@ namespace ASCOM.cam8_v06
             get
             {
                 return tecCoolerPower;
+            }
+        }
+
+        private byte crc8_block(byte[] pcBlock, byte len)
+        {
+            byte crc = 0xFF;
+            byte i, j;
+            for (j = 0; j < len; j++)
+            {
+                crc ^= pcBlock[j];
+                for (i = 0; i < 8; i++)
+                    if ((crc & 0x80) != 0) crc = (byte)((crc << 1) ^ 0x31);
+                    else crc = (byte)(crc << 1);
+            }
+            return crc;
+        }
+
+        private void tecSendCommand(byte[] cmd)
+        {
+            tecComPort.Write(cmd, 0, cmd.Length);
+        }
+
+        private byte tecReadPacket()
+        {
+            byte crc, i;
+            for (i = 0; i < rxBufferSize; i++)
+                rxBuf[i] = 0;
+            if ((tecComPort.BytesToRead != responcePacketSize) && (tecComPort.BytesToRead != infoPacketSize)) return 0;
+            tecComPort.Read(rxBuf, 0, tecComPort.BytesToRead);
+            crc = crc8_block(rxBuf, (byte)(rxBuf.Length - 1));
+            if (rxBuf[rxBuf.Length - 1] != crc) return 1;
+            //check command responce v, d. renew interface if correct
+            switch (rxBuf[0])
+            {
+                case 0x76:
+                    {
+                        if ((rxBuf[1] != hwRevision) || (rxBuf[2] != swRevision) || (rxBuf[3] != sensorCount) || (rxBuf[4] != setCount)) return 0;
+                        else return 1;                   
+                    };
+                case 0x64:
+                    {
+                        tecCCDTemp = (((rxBuf[1] << 8) | (rxBuf[2])) - tempOffset * 10) / 10.0;
+                        tecHeatsinkTemp = (((rxBuf[3] << 8) | (rxBuf[4])) - tempOffset * 10) / 10.0;
+                        tecSetTemp = (((rxBuf[5] << 8) | (rxBuf[6])) - tempOffset * 10) / 10.0;
+                        tecCoolerPower = rxBuf[7];
+                        tecErrorCode = rxBuf[8];
+                        if (rxBuf[9] == 0x00) tecCoolenOn = false;
+                        else tecCoolenOn = true;
+                        return 0;
+                    };
+                default:
+                    {
+                        return 1;
+                    };
             }
         }
     }
@@ -252,6 +368,7 @@ namespace ASCOM.cam8_v06
             settingsForm.gain = gainState;
             settingsForm.offset = offsetState;
             settingsForm.onTop = onTopState;
+            if (!coolerEnabledState) settingsForm.tecStatus = "disabled";
             tec = new TECControl(coolerComPortState);
             tl.LogMessage("Camera", "Completed initialisation");
         }
@@ -353,6 +470,12 @@ namespace ASCOM.cam8_v06
                     {
                         tl.LogMessage("Connected Set", "TEC Connect to module");
                         tec.connect = true;
+                        if (tec.connect == false)
+                        {
+                            tl.LogMessage("Connected Set", "TEC Connect to module failed");
+                            System.Windows.Forms.MessageBox.Show("Cannot connect to selected TEC module, work without TEC module");
+                        }
+                        settingsForm.tecStatus = "connected";                    
                     }
                     tl.LogMessage("Connected Set", "cameraConnectedState=true");
                     cameraConnectedState = true;
@@ -370,6 +493,7 @@ namespace ASCOM.cam8_v06
                     {
                         tl.LogMessage("Connected Set", "TEC Disconnect to module");
                         tec.connect = false;
+                        settingsForm.tecStatus = "disconnected"; 
                     }
                     tl.LogMessage("Connected Set", "cameraConnectedState=false");                    
                     cameraConnectedState = false;
@@ -530,6 +654,34 @@ namespace ASCOM.cam8_v06
                 if ((coolerEnabledState) && (tec.connect))
                 {
                     tl.LogMessage("CCDTemperature Get", "ccdTemp=" + tec.ccdTemperature.ToString());
+                    switch (tec.tecError)
+                    {
+                        case 0:
+                            {
+                                settingsForm.tecStatus = "connected";
+                                break;
+                            }
+                        case 1:
+                            {
+                                settingsForm.tecStatus = "internal sensor failed";
+                                break;
+                            }
+                        case 2:
+                            {
+                                settingsForm.tecStatus = "external sensor failed";
+                                break;
+                            }
+                        case 3:
+                            {
+                                settingsForm.tecStatus = "both sensors failed";
+                                break;
+                            }
+                        default:
+                            {
+                                settingsForm.tecStatus = "unknown error";
+                                break;
+                            }
+                    }
                     return tec.ccdTemperature;
                 }
                 else
