@@ -120,23 +120,6 @@ namespace ASCOM.cam8_v06
             // 
             this.coolerComPortComboBox.Enabled = false;
             this.coolerComPortComboBox.FormattingEnabled = true;
-            this.coolerComPortComboBox.Items.AddRange(new object[] {
-            "COM1",
-            "COM2",
-            "COM3",
-            "COM4",
-            "COM5",
-            "COM6",
-            "COM7",
-            "COM8",
-            "COM9",
-            "COM10",
-            "COM11",
-            "COM12",
-            "COM13",
-            "COM14",
-            "COM15",
-            "COM16"});
             this.coolerComPortComboBox.Location = new System.Drawing.Point(6, 42);
             this.coolerComPortComboBox.Name = "coolerComPortComboBox";
             this.coolerComPortComboBox.Size = new System.Drawing.Size(87, 21);

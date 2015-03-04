@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using ASCOM.Utilities;
+using System.IO.Ports;
 using ASCOM.cam8_v06;
 
 using FTD2XX_NET;
@@ -62,14 +63,24 @@ namespace ASCOM.cam8_v06
             // Initialise current values of user settings from the ASCOM Profile 
             chkTrace.Checked = Camera.traceState;
             coolerCheckBox.Checked = Camera.coolerEnabledState;
-            coolerComPortComboBox.SelectedIndex = Camera.coolerComPortState-1;
+            //find available com ports in system
+            string [] comPorts;
+            comPorts = SerialPort.GetPortNames();
+            int j;
+            coolerComPortComboBox.SelectedIndex = 0;
+            for (j = 0; j < comPorts.Length; j++)
+            {
+                coolerComPortComboBox.Items.Add(comPorts[j]);
+                if (comPorts[j] == Camera.coolerComPortState) coolerComPortComboBox.SelectedIndex = j;
+            }
+            
         }
 
         private void cmdOK_Click(object sender, EventArgs e) // OK button event handler
         {
             Camera.traceState = chkTrace.Checked;
             Camera.coolerEnabledState = coolerCheckBox.Checked;
-            Camera.coolerComPortState = coolerComPortComboBox.SelectedIndex+1;
+            Camera.coolerComPortState = coolerComPortComboBox.SelectedItem.ToString();
         }
 
         private void cmdCancel_Click(object sender, EventArgs e) // Cancel button event handler

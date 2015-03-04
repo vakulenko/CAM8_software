@@ -78,9 +78,9 @@ namespace ASCOM.cam8_v06
 
         private bool CCDTemperatureSendCmdAction = true;
 
-        public TECControl(int comPort, bool traceEnabled)
+        public TECControl(string comPort, bool traceEnabled)
         {
-            tecComPort = new SerialPort("COM" + comPort.ToString(), baudrate, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
+            tecComPort = new SerialPort(comPort, baudrate, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
             rxBuf = new byte[rxBufferSize];
             tectl = new TraceLogger("", "tec_cam8_v06");
             tectl.Enabled = traceEnabled;
@@ -332,13 +332,13 @@ namespace ASCOM.cam8_v06
         internal static string offsetStateDefault = "-7";
         internal static string onTopStateDefault = "false";
         internal static string coolerEnabledStateDefault = "false";
-        internal static string coolerComPortStateDefault = "1";
+        internal static string coolerComPortStateDefault = "COM1";
         internal static bool traceState;
         internal static short gainState;
         internal static short offsetState;
         internal static bool onTopState;
         internal static bool coolerEnabledState;
-        internal static int coolerComPortState;
+        internal static string coolerComPortState;
             
         /// <summary>
         /// Form, handle gain/offset settings
@@ -700,6 +700,21 @@ namespace ASCOM.cam8_v06
                 if ((coolerEnabledState) && (tec.Connect))
                 {
                     tl.LogMessage("CCDTemperature Get", "ccdTemp=" + tec.CCDTemperature.ToString());
+
+                    string[] comPorts;
+                    bool comPortEjected = false;
+                    comPorts = SerialPort.GetPortNames();
+                    int j;                    
+                    for (j = 0; j < comPorts.Length; j++)
+                        if (comPorts[j] == coolerComPortState) comPortEjected = true;
+
+                    if (comPortEjected)
+                    {
+                        tl.LogMessage("CCDTemperature Get", coolerComPortState+ "ejected, TEC module discennect");
+                        coolerEnabledState = false;
+                        settingsForm.tecStatus = "ejected";
+                    }
+
                     switch (tec.TECError)
                     {
                         case 0:
@@ -1539,7 +1554,7 @@ namespace ASCOM.cam8_v06
                 offsetState = Convert.ToInt16(driverProfile.GetValue(driverID, offsetStateProfileName, string.Empty, offsetStateDefault));
                 onTopState = Convert.ToBoolean(driverProfile.GetValue(driverID, onTopStateProfileName, string.Empty, onTopStateDefault));
                 coolerEnabledState = Convert.ToBoolean(driverProfile.GetValue(driverID, coolerEnabledStateProfileName, string.Empty, coolerEnabledStateDefault));
-                coolerComPortState = Convert.ToInt16(driverProfile.GetValue(driverID, coolerComPortStateProfileName, string.Empty, coolerComPortStateDefault));
+                coolerComPortState = driverProfile.GetValue(driverID, coolerComPortStateProfileName, string.Empty, coolerComPortStateDefault);
             }
         }
 
