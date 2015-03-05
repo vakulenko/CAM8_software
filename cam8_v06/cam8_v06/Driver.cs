@@ -695,59 +695,58 @@ namespace ASCOM.cam8_v06
 
         public double CCDTemperature
         {
-            get
+            get            
             {
                 if ((coolerEnabledState) && (tec.Connect))
                 {
-                    tl.LogMessage("CCDTemperature Get", "ccdTemp=" + tec.CCDTemperature.ToString());
-
+                    tl.LogMessage("CCDTemperature Get", "Check COM ports, if TEC COM not present - TEC module ejected");                    
                     string[] comPorts;
-                    bool comPortEjected = false;
+                    bool comPortEjected = true;
                     comPorts = SerialPort.GetPortNames();
-                    int j;                    
-                    for (j = 0; j < comPorts.Length; j++)
-                        if (comPorts[j] == coolerComPortState) comPortEjected = true;
-
+                    int j;
+                    for (j = 0; j < comPorts.Length; j++)                    
+                        if (comPorts[j] == coolerComPortState) comPortEjected = false;                    
                     if (comPortEjected)
                     {
-                        tl.LogMessage("CCDTemperature Get", coolerComPortState+ "ejected, TEC module discennect");
-                        coolerEnabledState = false;
                         settingsForm.tecStatus = "ejected";
+                        tec.Connect = false;
+                        tl.LogMessage("CCDTemperature Get", coolerComPortState + "ejected, TEC module discennect");
+                        throw new ASCOM.PropertyNotImplementedException("CCDTemperature", false);
                     }
-
                     switch (tec.TECError)
-                    {
-                        case 0:
-                            {
-                                settingsForm.tecStatus = "connected";
-                                break;
-                            }
-                        case 1:
-                            {
-                                settingsForm.tecStatus = "internal sensor failed";
-                                break;
-                            }
-                        case 2:
-                            {
-                                settingsForm.tecStatus = "external sensor failed";
-                                break;
-                            }
-                        case 3:
-                            {
-                                settingsForm.tecStatus = "both sensors failed";
-                                break;
-                            }
-                        default:
-                            {
-                                settingsForm.tecStatus = "unknown error";
-                                break;
-                            }
-                    }
-                    return tec.CCDTemperature;
-                }
+                        {
+                            case 0:
+                                {
+                                    settingsForm.tecStatus = "connected";
+                                    break;
+                                }
+                            case 1:
+                                {
+                                    settingsForm.tecStatus = "internal sensor failed";
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    settingsForm.tecStatus = "external sensor failed";
+                                    break;
+                                }
+                            case 3:
+                                {
+                                    settingsForm.tecStatus = "both sensors failed";
+                                    break;
+                                }
+                            default:
+                                {
+                                    settingsForm.tecStatus = "unknown error";
+                                    break;
+                                }
+                        }
+                    tl.LogMessage("CCDTemperature Get","ccdTemp=" + tec.CCDTemperature.ToString());
+                    return tec.CCDTemperature;                    
+                }                            
                 else
                 {
-                    tl.LogMessage("CCDTemperature Get", "Not implemented");
+                    tl.LogMessage("CCDTemperature Get", "Not implemented");                    
                     throw new ASCOM.PropertyNotImplementedException("CCDTemperature", false);
                 }
             }

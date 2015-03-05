@@ -67,7 +67,6 @@ namespace ASCOM.cam8_v06
             string [] comPorts;
             comPorts = SerialPort.GetPortNames();
             int j;
-            coolerComPortComboBox.SelectedIndex = 0;
             for (j = 0; j < comPorts.Length; j++)
             {
                 coolerComPortComboBox.Items.Add(comPorts[j]);
