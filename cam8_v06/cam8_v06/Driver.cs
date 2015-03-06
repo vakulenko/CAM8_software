@@ -89,7 +89,6 @@ namespace ASCOM.cam8_v06
 
         public void Dispose()
         {
-            this.CoolerOn = false;
             tecComPort.Dispose();
             tectl.Dispose();
         }
@@ -134,7 +133,6 @@ namespace ASCOM.cam8_v06
                 }
                 else
                 {
-                    this.CoolerOn = false;
                     tecComPort.Close();
                     tectl.LogMessage("Connect Set", "COM close");
                     tecIsConnected = value;
