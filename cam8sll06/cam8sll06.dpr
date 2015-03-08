@@ -56,7 +56,7 @@ adress : integer;
 //биннинг,
 mBin : integer;
 //переменная-флаг, отображает готовность к считыванию кадра
-mImageReady : boolean = false;
+imageReady : boolean = false;
 //переменная-состояние камеры
 cameraState : integer = 0;
 //таймер экспозиции и 15В таймер
@@ -115,7 +115,8 @@ begin
         end;
     end;
   end;
-  mImageReady := true;
+  imageReady := true;
+  cameraState := cameraIdle;
   hTargetWnd := FindWindowEx(0, 0, nil, PChar('CAM8'));
   if hTargetWnd <> 0 then SendMessage(hTargetWnd, 2048, 0, DWORD(@bufim));
 end;
@@ -123,10 +124,10 @@ end;
 //создание потока с самоликвидацией
 procedure ComRead;
 begin
-co:=posl.Create(true);
-co.FreeOnTerminate:=true;
-co.Priority:=tpNormal;
-co.Resume;
+  co:=posl.Create(true);
+  co.FreeOnTerminate:=true;
+  co.Priority:=tpNormal;
+  co.Resume;
 end;
 
 //Заполнение выходного буфера массивом для передачи и размещения байта val по адресу adr в микросхеме AD9822.
@@ -238,57 +239,57 @@ end;
 
 procedure shift0;
 begin
-HC595($db);
-HC595($fa);
-HC595($ee);
-HC595($cf);
+  HC595($db);
+  HC595($fa);
+  HC595($ee);
+  HC595($cf);
 end;
 
 //Заполнение выходного буфера массивом для одного шага вертикального сдвига}
 procedure shift;
 begin
-HC595($cb);
-HC595($db);
-HC595($da);
-HC595($fa);
-HC595($ea);
-HC595($ee);
-HC595($ce);
-HC595($cf);
+  HC595($cb);
+  HC595($db);
+  HC595($da);
+  HC595($fa);
+  HC595($ea);
+  HC595($ee);
+  HC595($ce);
+  HC595($cf);
 end;
 
 //Заполнение выходного буфера массивом для "слива" накопленного изображения в сдвиговый регистр}
 procedure shift2;
 begin
-shift;
-HC595($c7);
-HC595($c7);
-HC595($c7);
-HC595($c7);
-HC595($cb);
-HC595($d9);
-HC595($d9);
-HC595($d9);
-HC595($d9);
-HC595($db);
-HC595($fa);
-HC595($ea);
-HC595($ee);
-HC595($ce);
-HC595($cf);
+  shift;
+  HC595($c7);
+  HC595($c7);
+  HC595($c7);
+  HC595($c7);
+  HC595($cb);
+  HC595($d9);
+  HC595($d9);
+  HC595($d9);
+  HC595($d9);
+  HC595($db);
+  HC595($fa);
+  HC595($ea);
+  HC595($ee);
+  HC595($ce);
+  HC595($cf);
 end;
 
 //{Заполнение выходного буфера массивом для одного шага вертикального сдвига + сигнал SUB для очитки области изображения}
 procedure shift3;
 begin
-HC595($cb);
-HC595($db);
-HC595($9a);
-HC595($ba);
-HC595($aa);
-HC595($ee);
-HC595($ce);
-HC595($cf);
+  HC595($cb);
+  HC595($db);
+  HC595($9a);
+  HC595($ba);
+  HC595($aa);
+  HC595($ee);
+  HC595($ce);
+  HC595($cf);
 end;
 
 {Заполнение выходного буфера массивом для одного шага вертикального сдвига + сигнал SUB для очитки области изображения}
@@ -486,6 +487,16 @@ begin
   Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
 end;
 
+procedure ExposureTimerTick; stdcall;
+begin
+  KillTimer (0,ExposureTimer);
+  cameraState := cameraReading;
+  adress:=0;
+  HC595($cf); //on +15V
+  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  readframe (mBin, 1000);
+end;
+
 //Connect camera, return bool result}
 //Опрос подключенных устройств и инициализация AD9822
 function cameraConnect () : WordBool; stdcall; export;
@@ -542,16 +553,6 @@ begin
   Result:= FT_OP_flag;
 end;
 
-procedure ExposureTimerTick; stdcall;
-begin
-  KillTimer (0,ExposureTimer);
-  cameraState := cameraReading;
-  adress:=0;
-  HC595($cf); //on +15V
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
-  readframe (mBin, 1000);
-end;
-
 //Check camera connection, return bool result
 function cameraIsConnected () : WordBool; stdcall; export;
 begin
@@ -581,7 +582,7 @@ begin
     mXn:=StartX div 2;
     mdeltX:=NumX div 2;
   end;
-  mImageReady := false;
+  imageReady := false;
   //camera exposing
   cameraState := cameraExposing;
   if Duration > 0.499 then
@@ -615,7 +616,7 @@ end;
 //Check ImageReady flag, is image ready for transfer - transfer image to driver and return bool ImageReady flag
 function cameraGetImageReady : WordBool; stdcall; export;
 begin
-  Result := mImageReady;
+  Result := imageReady;
 end;
 
 //Get back pointer to image}

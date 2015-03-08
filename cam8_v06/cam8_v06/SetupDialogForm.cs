@@ -79,7 +79,8 @@ namespace ASCOM.cam8_v06
         {
             Camera.traceState = chkTrace.Checked;
             Camera.coolerEnabledState = coolerCheckBox.Checked;
-            Camera.coolerComPortState = coolerComPortComboBox.SelectedItem.ToString();
+            if (coolerComPortComboBox.SelectedItem != null) Camera.coolerComPortState = coolerComPortComboBox.SelectedItem.ToString();
+            else Camera.coolerEnabledState = false;
         }
 
         private void cmdCancel_Click(object sender, EventArgs e) // Cancel button event handler
