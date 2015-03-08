@@ -1,17 +1,18 @@
+
 // --------------------------------------------------------------------------------
-// ASCOM Camera driver for cam8 v.0.6
+// ASCOM Camera driver for cam8s v.0.55
 // Edit Log:
 // Date			Who	Vers	Description
 // -----------	---	-----	-------------------------------------------------------
-// 30-dec-2012	VSS	0.1 	Initial edit, created from ASCOM driver template
-// 20-jan-2013  VSS 0.2     Add functional implemented in version 0.2
-// 12-mar-2013  VSS 0.3     Fixed horizontal line in top of frame, implement hardware ROI, faster image reading prodecure
-// 19-may-2013  VSS 0.4     Improved image read performance and user interface
-// 24-sep-2014  VSS 0.5     Fixed bug with small exposures, saving gain/offset settings
-// 10-oct-2014  VSS 0.51    Fixed minor bug in readframe function in cam8ll051.dll
+// 24-sep-2014  VSS 0.5     Initial release (based on cam8 v.0.5)
 // 27-nov-2014  VSS 0.55    Fixed minor bugs with saving gain/offset settings
-// 20-feb-2015  VSS 0.6     Some minimal code refactoring, added TEC module
+// 08-mar-2015  VSS 0.6     Some code refactoring + added TEC control
 // --------------------------------------------------------------------------------
+
+
+// This is used to define code in the template that is specific to one class implementation
+// unused code canbe deleted and this definition removed.
+#define Camera
 
 #define Camera
 
@@ -33,13 +34,12 @@ using System.IO.Ports;
 //for pauses
 using System.Threading;
 
-
-namespace ASCOM.cam8_v06
+namespace ASCOM.cam8s_v06
 {
     /// <summary>
-    /// ASCOM Camera Driver for cam8_v06.
+    /// ASCOM Camera Driver for cam8s_v06.
     /// </summary>
-    [Guid("7e94c8a5-48a7-4395-9873-681f631fc9ef")]
+    [Guid("0d466319-1aab-4ca4-ac7d-9580bee3f93e")]
     [ClassInterface(ClassInterfaceType.None)]
 
     public class TECControl
@@ -84,7 +84,7 @@ namespace ASCOM.cam8_v06
             rxBuf = new byte[rxBufferSize];
             tectl = new TraceLogger("", "tec_cam8_v06");
             tectl.Enabled = traceEnabled;
-            tectl.LogMessage("TECControl", "Initialization finished");            
+            tectl.LogMessage("TECControl", "Initialization finished");
         }
 
         public void Dispose()
@@ -97,12 +97,12 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tectl.LogMessage("Connect Get", "tecIsConnected=" + tecIsConnected.ToString());  
+                tectl.LogMessage("Connect Get", "tecIsConnected=" + tecIsConnected.ToString());
                 return tecIsConnected;
             }
             set
             {
-                tectl.LogMessage("Connect Set", "value=" + value.ToString());  
+                tectl.LogMessage("Connect Set", "value=" + value.ToString());
                 if (value)
                 {
                     try
@@ -144,7 +144,7 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tectl.LogMessage("TECError Get", "Error="+tecErrorCode.ToString());
+                tectl.LogMessage("TECError Get", "Error=" + tecErrorCode.ToString());
                 return tecErrorCode;
             }
         }
@@ -180,7 +180,7 @@ namespace ASCOM.cam8_v06
             }
             set
             {
-                tectl.LogMessage("SetCCDTemperature Set", "SetCCDTemperature="+value.ToString());
+                tectl.LogMessage("SetCCDTemperature Set", "SetCCDTemperature=" + value.ToString());
                 if ((value < this.MinSetTemperature) || (value > this.MaxSetTemperature))
                 {
                     tectl.LogMessage("SetCCDTemperature Set", "InvalidValue, SetCCDTemperature must be in rang [minSetTemo;maxSetTemp");
@@ -193,7 +193,7 @@ namespace ASCOM.cam8_v06
                 setCmd[2] = (byte)(tmp & 0x00ff);
                 setCmd[3] = crc8_block(setCmd, 3);
                 tecSendCommand(setCmd);
-                Thread.Sleep(1000);                
+                Thread.Sleep(1000);
             }
         }
 
@@ -286,14 +286,14 @@ namespace ASCOM.cam8_v06
                 case 0x76:
                     {
                         if ((rxBuf[1] != hwRevision) || (rxBuf[2] != swRevision) || (rxBuf[3] != sensorCount) || (rxBuf[4] != setCount)) return 1;
-                        else return 0;                   
+                        else return 0;
                     };
                 case 0x64:
                     {
                         tecCCDTemp = (((rxBuf[1] << 8) | (rxBuf[2])) - tempOffset * 10) / 10.0;
                         tecHeatsinkTemp = (((rxBuf[3] << 8) | (rxBuf[4])) - tempOffset * 10) / 10.0;
                         tecSetTemp = (((rxBuf[5] << 8) | (rxBuf[6])) - tempOffset * 10) / 10.0;
-                        tecCoolerPower = (double) (rxBuf[7]*100/255);
+                        tecCoolerPower = (double)(rxBuf[7] * 100 / 255);
                         tecErrorCode = rxBuf[8];
                         if (rxBuf[9] == 0x00) tecCoolenOn = false;
                         else tecCoolenOn = true;
@@ -313,12 +313,12 @@ namespace ASCOM.cam8_v06
         /// ASCOM DeviceID (COM ProgID) for this driver.
         /// The DeviceID is used by ASCOM applications to load the driver at runtime.
         /// </summary>
-        internal static string driverID = "ASCOM.cam8_v06.Camera";
+        internal static string driverID = "ASCOM.cam8s_v06.Camera";
 
         /// <summary>
         /// Driver description that displays in the ASCOM Chooser.
         /// </summary>
-        private static string driverDescription = "Cam8 v.0.6 ASCOM Driver";
+        private static string driverDescription = "Cam8s v.0.6 ASCOM Driver";
 
         //parameters fro ASCOM profile read/write
         internal static string traceStateProfileName = "Trace Level";
@@ -339,7 +339,7 @@ namespace ASCOM.cam8_v06
         internal static bool onTopState;
         internal static bool coolerEnabledState;
         internal static string coolerComPortState;
-            
+
         /// <summary>
         /// Form, handle gain/offset settings
         /// </summary>
@@ -367,38 +367,38 @@ namespace ASCOM.cam8_v06
         /// </summary>
         private TraceLogger tl;
 
-        //Imports cam8ll06.dll functions
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        //Imports cam8sll06.dll functions
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraConnect();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraDisconnect();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraIsConnected();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraStartExposure(int Bin, int StartX, int StartY, int NumX, int NumY, double Duration, bool light);
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraStopExposure();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int cameraGetCameraState();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraGetImageReady();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern uint cameraGetImage();
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraSetGain(int val);
-        [DllImport("cam8ll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport("cam8sll06.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraSetOffset(int val);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="cam8_v06"/> class.
+        /// Initializes a new instance of the <see cref="cam8s_v06"/> class.
         /// Must be public for COM registration.
         /// </summary>
         public Camera()
         {
             // Read device configuration from the ASCOM Profile store
-            ReadProfile();            
+            ReadProfile();
             //Init debug logger
-            tl = new TraceLogger("", "cam8_v06");
+            tl = new TraceLogger("", "cam8s_v06");
             tl.Enabled = traceState;
             tl.LogMessage("Camera", "Starting initialisation");
             // Initialise connected to false
@@ -433,7 +433,7 @@ namespace ASCOM.cam8_v06
         public void SetupDialog()
         {
             // show camera settings form
-            if (IsConnected) return;  
+            if (IsConnected) return;
             using (SetupDialogForm F = new SetupDialogForm())
             {
                 var result = F.ShowDialog();
@@ -505,23 +505,23 @@ namespace ASCOM.cam8_v06
                 if (value == IsConnected) return;
                 if (value)
                 {
-                    tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from cam8ll06.dll");
+                    tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from cam8sll06.dll");
                     if (cameraConnect() == false)
                     {
-                        tl.LogMessage("Connected Set", "Cant connect to cam8");
-                        throw new ASCOM.NotConnectedException("Cant connect to cam8");
+                        tl.LogMessage("Connected Set", "Cant connect to cam8s");
+                        throw new ASCOM.NotConnectedException("Cant connect to cam8s");
                     }
                     if (coolerEnabledState)
                     {
                         tl.LogMessage("Connected Set", "TEC Connect to module");
                         tec.Connect = true;
-                        settingsForm.tecStatus = "connected";  
+                        settingsForm.tecStatus = "connected";
                         if (tec.Connect == false)
                         {
                             tl.LogMessage("Connected Set", "TEC Connect to module failed");
                             System.Windows.Forms.MessageBox.Show("Cannot connect to selected TEC module, work without TEC module");
-                            settingsForm.tecStatus = "disconnected";  
-                        }                   
+                            settingsForm.tecStatus = "disconnected";
+                        }
                     }
                     tl.LogMessage("Connected Set", "cameraConnectedState=true");
                     cameraConnectedState = true;
@@ -529,19 +529,19 @@ namespace ASCOM.cam8_v06
                 }
                 else
                 {
-                    tl.LogMessage("Connected Set", "Disconnecting from camera, call cameraConnect from cam8ll06.dll");
+                    tl.LogMessage("Connected Set", "Disconnecting from camera, call cameraConnect from cam8sll06.dll");
                     if (cameraDisconnect() == false)
                     {
-                        tl.LogMessage("Connected Set", "Cant disconnect cam8");
-                        throw new ASCOM.NotConnectedException("Cant disconnect cam8");
+                        tl.LogMessage("Connected Set", "Cant disconnect cam8s");
+                        throw new ASCOM.NotConnectedException("Cant disconnect cam8s");
                     }
                     if (coolerEnabledState)
                     {
                         tl.LogMessage("Connected Set", "TEC Disconnect from module");
                         tec.Connect = false;
-                        settingsForm.tecStatus = "disconnected"; 
+                        settingsForm.tecStatus = "disconnected";
                     }
-                    tl.LogMessage("Connected Set", "cameraConnectedState=false");                    
+                    tl.LogMessage("Connected Set", "cameraConnectedState=false");
                     cameraConnectedState = false;
                     //save settings for ASCOM profile
                     WriteProfile();
@@ -594,9 +594,9 @@ namespace ASCOM.cam8_v06
         public string Name
         {
             get
-            {                
-                tl.LogMessage("Name Get", "cam8");
-                return "cam8";
+            {
+                tl.LogMessage("Name Get", "cam8s");
+                return "cam8s";
             }
         }
 
@@ -625,7 +625,7 @@ namespace ASCOM.cam8_v06
 
         public void AbortExposure()
         {
-            tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from cam8ll06.dll");
+            tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from cam8sll06.dll");
             if (cameraStopExposure() == false)
             {
                 tl.LogMessage("AbortExposure", "PropertyNotImplementedException Abort Exposure failed");
@@ -695,17 +695,17 @@ namespace ASCOM.cam8_v06
 
         public double CCDTemperature
         {
-            get            
+            get
             {
                 if ((coolerEnabledState) && (tec.Connect))
                 {
-                    tl.LogMessage("CCDTemperature Get", "Check COM ports, if TEC COM not present - TEC module ejected");                    
+                    tl.LogMessage("CCDTemperature Get", "Check COM ports, if TEC COM not present - TEC module ejected");
                     string[] comPorts;
                     bool comPortEjected = true;
                     comPorts = SerialPort.GetPortNames();
                     int j;
-                    for (j = 0; j < comPorts.Length; j++)                    
-                        if (comPorts[j] == coolerComPortState) comPortEjected = false;                    
+                    for (j = 0; j < comPorts.Length; j++)
+                        if (comPorts[j] == coolerComPortState) comPortEjected = false;
                     if (comPortEjected)
                     {
                         settingsForm.tecStatus = "ejected";
@@ -714,39 +714,39 @@ namespace ASCOM.cam8_v06
                         throw new ASCOM.PropertyNotImplementedException("CCDTemperature", false);
                     }
                     switch (tec.TECError)
-                        {
-                            case 0:
-                                {
-                                    settingsForm.tecStatus = "connected";
-                                    break;
-                                }
-                            case 1:
-                                {
-                                    settingsForm.tecStatus = "internal sensor failed";
-                                    break;
-                                }
-                            case 2:
-                                {
-                                    settingsForm.tecStatus = "external sensor failed";
-                                    break;
-                                }
-                            case 3:
-                                {
-                                    settingsForm.tecStatus = "both sensors failed";
-                                    break;
-                                }
-                            default:
-                                {
-                                    settingsForm.tecStatus = "unknown error";
-                                    break;
-                                }
-                        }
-                    tl.LogMessage("CCDTemperature Get","ccdTemp=" + tec.CCDTemperature.ToString());
-                    return tec.CCDTemperature;                    
-                }                            
+                    {
+                        case 0:
+                            {
+                                settingsForm.tecStatus = "connected";
+                                break;
+                            }
+                        case 1:
+                            {
+                                settingsForm.tecStatus = "internal sensor failed";
+                                break;
+                            }
+                        case 2:
+                            {
+                                settingsForm.tecStatus = "external sensor failed";
+                                break;
+                            }
+                        case 3:
+                            {
+                                settingsForm.tecStatus = "both sensors failed";
+                                break;
+                            }
+                        default:
+                            {
+                                settingsForm.tecStatus = "unknown error";
+                                break;
+                            }
+                    }
+                    tl.LogMessage("CCDTemperature Get", "ccdTemp=" + tec.CCDTemperature.ToString());
+                    return tec.CCDTemperature;
+                }
                 else
                 {
-                    tl.LogMessage("CCDTemperature Get", "Not implemented");                    
+                    tl.LogMessage("CCDTemperature Get", "Not implemented");
                     throw new ASCOM.PropertyNotImplementedException("CCDTemperature", false);
                 }
             }
@@ -756,7 +756,7 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("CameraState Get", "Call cameraGetCameraState from cam8ll06.dll");
+                tl.LogMessage("CameraState Get", "Call cameraGetCameraState from cam8sll06.dll");
                 switch ((short)cameraGetCameraState())
                 {
                     case 0:
@@ -909,8 +909,8 @@ namespace ASCOM.cam8_v06
             {
                 if ((coolerEnabledState) && (tec.Connect))
                 {
-                    tl.LogMessage("CoolerOn Set", "coolerOn="+value.ToString());
-                    tec.CoolerOn=value;
+                    tl.LogMessage("CoolerOn Set", "coolerOn=" + value.ToString());
+                    tec.CoolerOn = value;
                 }
                 else
                 {
@@ -930,7 +930,7 @@ namespace ASCOM.cam8_v06
                     return tec.CoolerPower;
                 }
                 else
-                {            
+                {
                     tl.LogMessage("CoolerPower Get", "Not implemented");
                     throw new ASCOM.PropertyNotImplementedException("CoolerPower", false);
                 }
@@ -1010,7 +1010,7 @@ namespace ASCOM.cam8_v06
             }
         }
 
-        public short GainMax        
+        public short GainMax
         {
             get
             {
@@ -1041,8 +1041,8 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("HasShutter Get", false.ToString());
-                return false;
+                tl.LogMessage("HasShutter Get", true.ToString());
+                return true;
             }
         }
 
@@ -1075,7 +1075,7 @@ namespace ASCOM.cam8_v06
 
                 uint imagepoint;
                 //Get image pointer
-                tl.LogMessage("ImageArray Get", "Call cameraGetImage from cam8ll06.dll");
+                tl.LogMessage("ImageArray Get", "Call cameraGetImage from cam8sll06.dll");
                 imagepoint = cameraGetImage();
                 unsafe
                 {
@@ -1088,14 +1088,14 @@ namespace ASCOM.cam8_v06
 
                     for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
                         for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
-                            {
-                                pixelpoint = (int*)(zeropixelpoint + (j * ccdWidth + i));
-                                cameraImageArray.SetValue(*pixelpoint, k);
-                                k++;
-                            }                    
+                        {
+                            pixelpoint = (int*)(zeropixelpoint + (j * ccdWidth + i));
+                            cameraImageArray.SetValue(*pixelpoint, k);
+                            k++;
+                        }
                 }
                 return cameraImageArray;
-            }        
+            }
         }
 
         public object ImageArrayVariant
@@ -1116,7 +1116,7 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("ImageReady Get", "Call cameraGetImageReady from cam8ll06.dll");
+                tl.LogMessage("ImageReady Get", "Call cameraGetImageReady from cam8sll06.dll");
                 cameraImageReady = cameraGetImageReady();
                 tl.LogMessage("ImageReady Get", cameraImageReady.ToString());
                 return cameraImageReady;
@@ -1320,11 +1320,11 @@ namespace ASCOM.cam8_v06
                 if ((coolerEnabledState) && (tec.Connect))
                 {
                     tl.LogMessage("SetCCDTemperature Set", "setCCDTemp=" + value.ToString());
-                    if ((value < tec.MinSetTemperature)||(value>tec.MaxSetTemperature))
+                    if ((value < tec.MinSetTemperature) || (value > tec.MaxSetTemperature))
                     {
                         tl.LogMessage("SetCCDTemperature Set", "InvalidValueException SetCCDTemperature must be in range [minSetTemp;maxSetTemp]");
                         throw new InvalidValueException("SetCCDTemperature Set", value.ToString(), "SetCCDTemperature must be in range [-50;50]");
-                    }                    
+                    }
                     tec.SetCCDTemperature = value;
                 }
                 else
@@ -1355,17 +1355,17 @@ namespace ASCOM.cam8_v06
                 throw new InvalidValueException("StartExposure", (cameraStartY + cameraNumY).ToString(), "(cameraStartY + cameraNumY) must be < (ccdHeight / cameraBinY)");
             }
             //set camera gain/offset
-            tl.LogMessage("StartExposure", "Call cameraSetGain from cam8ll06.dll args: gain=" + settingsForm.gain.ToString());
-            if (cameraSetGain(settingsForm.gain) == false) 
+            tl.LogMessage("StartExposure", "Call cameraSetGain from cam8sll06.dll args: gain=" + settingsForm.gain.ToString());
+            if (cameraSetGain(settingsForm.gain) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set gain to cam8");
-                throw new ASCOM.InvalidOperationException("Cant set gain to cam8");
+                tl.LogMessage("StartExposure", "Cant set gain to cam8s");
+                throw new ASCOM.InvalidOperationException("Cant set gain to cam8s");
             }
-            tl.LogMessage("StartExposure", "Call cameraSetOffset from cam8ll06.dll args: offset=" + settingsForm.offset.ToString());
-            if (cameraSetOffset(settingsForm.offset) == false) 
+            tl.LogMessage("StartExposure", "Call cameraSetOffset from cam8sll06.dll args: offset=" + settingsForm.offset.ToString());
+            if (cameraSetOffset(settingsForm.offset) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set offset to cam8");
-                throw new ASCOM.InvalidOperationException("Cant set offset to cam8");
+                tl.LogMessage("StartExposure", "Cant set offset to cam8s");
+                throw new ASCOM.InvalidOperationException("Cant set offset to cam8s");
             }
             //Save parameters
             cameraLastExposureDuration = Duration;
@@ -1374,7 +1374,7 @@ namespace ASCOM.cam8_v06
             offsetState = settingsForm.offset;
             onTopState = settingsForm.onTop;
             //start exposure
-            tl.LogMessage("StartExposure", "Call cameraStartExposure from cam8ll06.dll, args: ");
+            tl.LogMessage("StartExposure", "Call cameraStartExposure from cam8sll06.dll, args: ");
             tl.LogMessage("StartExposure", " cameraBinX=" + cameraBinX.ToString() +
                                            " cameraStartX=" + cameraStartX.ToString() +
                                            " cameraStartY=" + cameraStartY.ToString() +
@@ -1382,7 +1382,7 @@ namespace ASCOM.cam8_v06
                                            " cameraNumY=" + cameraNumY.ToString() +
                                            " Duration=" + Duration.ToString() +
                                            " Light=" + true.ToString());
-            cameraStartExposure((int)cameraBinX, cameraStartX, cameraStartY, cameraNumX, cameraNumY, Duration, true);
+            cameraStartExposure((int)cameraBinX, cameraStartX, cameraStartY, cameraNumX, cameraNumY, Duration, Light);
         }
 
         public int StartX
@@ -1425,7 +1425,7 @@ namespace ASCOM.cam8_v06
 
         public void StopExposure()
         {
-            tl.LogMessage("StopExposure", "Aborting exposure, call cameraStopExposure from cam8ll06.dll");
+            tl.LogMessage("StopExposure", "Aborting exposure, call cameraStopExposure from cam8sll06.dll");
             if (cameraStopExposure() == false)
             {
                 tl.LogMessage("StopExposure", "PropertyNotImplementedException Stop Exposure failed");
@@ -1520,7 +1520,7 @@ namespace ASCOM.cam8_v06
         {
             get
             {
-                tl.LogMessage("IsConnected Get", "Call cameraIsConnected from cam8ll06.dll");
+                tl.LogMessage("IsConnected Get", "Call cameraIsConnected from cam8sll06.dll");
                 cameraConnectedState = cameraIsConnected();
                 tl.LogMessage("IsConnected Get", "connectedState=" + cameraConnectedState.ToString());
                 return cameraConnectedState;
