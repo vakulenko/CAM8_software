@@ -330,7 +330,7 @@ namespace ASCOM.cam8s_v06
         internal static string traceStateDefault = "false";
         internal static string gainStateDefault = "34";
         internal static string offsetStateDefault = "-7";
-        internal static string onTopStateDefault = "false";
+        internal static string onTopStateDefault = "true";
         internal static string coolerEnabledStateDefault = "false";
         internal static string coolerComPortStateDefault = "COM1";
         internal static bool traceState;
@@ -1093,7 +1093,7 @@ namespace ASCOM.cam8s_v06
                             cameraImageArray.SetValue(*pixelpoint, k);
                             k++;
                         }
-                }
+                }             
                 return cameraImageArray;
             }
         }

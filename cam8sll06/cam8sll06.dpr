@@ -1,24 +1,24 @@
-// --------------------------------------------------------------------------------
-// ASCOM Camera driver low-level interaction library for cam8s_v0.55
+﻿// --------------------------------------------------------------------------------
+// ASCOM Camera driver low-level interaction library for cam8s_v0.6
 // Edit Log:
 // Date Who Vers Description
 // ----------- --- ----- ---------------------------------------------------------
 // 24-sep-2014 VSS 0.5 Initial release (code obtained from grim)
 // 27-nov-2014 VSS 0.55 Only version was changed
-// 08-mar-2015 VSS 0.6  Some code refactoring
+// 08-mar-2015 VSS 0.6 Some code refactoring, add Stop exposure
 // --------------------------------------------------------------------------------
 library cam8sll06;
 uses
-  Classes,
-  SysUtils,
-  MyD2XX,
-  Windows;
-
+Classes,
+SysUtils,
+MyD2XX,
+Windows;
 {$R *.res}
+
 const
 //ширина изображения
 CameraWidth = 3000;
-//высота изображения
+ //высота изображения
 CameraHeight = 2000;
 //первоначальное значение на выводах порта BDBUS
 portfirst = $e1+8;
@@ -38,19 +38,23 @@ cameraReading = 3;
 cameraDownload = 4;
 cameraError = 5;
 
-type camera_image_type = array [0..CameraHeight-1,0..CameraWidth-1] of integer; //driver image type
-{Class for reading thread}
+//driver image type
+type camera_image_type = array [0..CameraHeight-1,0..CameraWidth-1] of integer;
+
+//Class for reading thread}
 posl = class(TThread)
 private
-{ Private declarations }
+// Private declarations
 protected
 procedure Execute; override;
 end;
 
-//GLobal variables}
+//GLobal variables
 var
 //переменная-флаг, отображает состояние соединения с камерой
 isConnected : boolean = false;
+//переменная-флаг, отображает, когда можно остановить экспозицию
+canStopExposureNow : boolean = true;
 //указатель текущего адреса в выходном буфере FT2232HL
 adress : integer;
 //биннинг,
@@ -58,18 +62,21 @@ mBin : integer;
 //переменная-флаг, отображает готовность к считыванию кадра
 imageReady : boolean = false;
 //переменная-состояние камеры
-cameraState : integer = 0;
+cameraState : integer;
 //таймер экспозиции и 15В таймер
 ExposureTimer, Timer15V : integer;
+//таймер для проверки переменной-флага CanStopExposureCount
+stopExposureTimer : integer;
+//количество проверок переменной-флага CanStopExposureCount
+checkCanStopExposureCount : integer;
 //переменная для второго потока (чтение изображения)
 co: posl;
 //буферный массив-изображение для операций
-bufim :array[0..CameraWidth-1,0..CameraHeight-1] of word;
+bufim :camera_image_type;
 //начало чтения и количество по строкам
 mYn,mdeltY:integer;
 //начало чтения и количество по столбцам
 mXn,mdeltX:integer;
-hTargetWnd: HWND;
 zatv:byte;
 
 // Небольшое пояснение работы с FT2232LH.
@@ -80,64 +87,16 @@ zatv:byte;
 //Замечательная микросхема FT2232HL честно без задержек все это передает на свой порт BDBUS. Передача 1 байта при этом занимает 65 нс.
 //Время отработки следующей команды n:=Write_USB_Device_Buffer(FT_CAM8B,adress) зависит от загруженности операционки и не контролируется
 //нами. Поэтому критическую последовательности импульсов нужно заполнять всю, а не передавать по очереди.
-//Благо програмный буфер драйвера это позволяет (в этой программе до 24 Мбайт!) Для этого нужно изменить текст D2XX.pas, я назвал его MyD2XX.pas}
-
-//собственно само чтение массива через порт ADBUS
-// Хитрое преобразование считанного буфера FT2232HL в буферный массив изображения
-//из-за особенностей AD9822 считываем сначала старший байт, потом младший, а в delphi наоборот.
-//Используем также тип integer32, а не word16 из-за переполнения при последующих операциях }
-procedure posl.Execute;
-var x,y,x1:word;
-begin
-  for y:= mYn to mYn+mdeltY-1 do
-  begin
-    if mbin = 1 then
-    begin
-      Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
-      for x:=0 to mdeltX - 1 do
-        begin
-          x1:=x+mXn;
-          bufim[2*x1,2*y]:=swap(FT_In_Buffer[4*x]);
-          bufim[2*x1,2*y+1]:=swap(FT_In_Buffer[4*x+1]);
-          bufim[2*x1+1,2*y+1]:=swap(FT_In_Buffer[4*x+2]);
-          bufim[2*x1+1,2*y]:=swap(FT_In_Buffer[4*x+3]);
-        end;
-    end
-    else begin
-      Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
-      for x:=0 to mdeltX - 1 do
-        begin
-          x1:=x+mXn;
-          bufim[2*x1,2*y]:=swap(FT_In_Buffer[x]);
-          bufim[2*x1+1,2*y]:=swap(FT_In_Buffer[x]);
-          bufim[2*x1+1,2*y+1]:=swap(FT_In_Buffer[x]);
-          bufim[2*x1,2*y+1]:=swap(FT_In_Buffer[x]);
-        end;
-    end;
-  end;
-  imageReady := true;
-  cameraState := cameraIdle;
-  hTargetWnd := FindWindowEx(0, 0, nil, PChar('CAM8'));
-  if hTargetWnd <> 0 then SendMessage(hTargetWnd, 2048, 0, DWORD(@bufim));
-end;
-
-//создание потока с самоликвидацией
-procedure ComRead;
-begin
-  co:=posl.Create(true);
-  co.FreeOnTerminate:=true;
-  co.Priority:=tpNormal;
-  co.Resume;
-end;
+//Благо програмный буфер драйвера это позволяет (в этой программе до 24 Мбайт!) Для этого нужно изменить текст D2XX.pas, я назвал его MyD2XX.pas
 
 //Заполнение выходного буфера массивом для передачи и размещения байта val по адресу adr в микросхеме AD9822.
-//Передача идет в последовательном коде.}
+//Передача идет в последовательном коде.
 procedure AD9822(adr:byte;val:word);
 const kol = 64;
 var dan:array[0..kol-1] of byte;
 i:integer;
 begin
-//заполняется массив первоначальным значением на выводах порта BDBUS
+  //заполняется массив первоначальным значением на выводах порта BDBUS
   fillchar(dan,kol,portfirst);
   for i:=1 to 32 do
     dan[i]:=dan[i] and $fe;
@@ -207,17 +166,17 @@ begin
 end;
 
 //Заполнение выходного буфера массивом для передачи байта val на выводы микросхемы HC595.
-//Передача идет в последовательном коде.}
+//Передача идет в последовательном коде.
 procedure HC595(va:byte);
 const kol = 20;
 var dan:array[0..kol-1] of byte;
 i:integer;
 val:word;
 begin
-//заполняется массив первоначальным значением на выводах порта BDBUS
+  //заполняется массив первоначальным значением на выводах порта BDBUS
   fillchar(dan,kol,portfirst);
   if zatv = 1 then val:=va+$100
-    else val:=va;
+  else val:=va;
   for i:=0 to 8 do
   begin
     dan[2*i+1]:=dan[2*i+1] + 2;
@@ -245,7 +204,7 @@ begin
   HC595($cf);
 end;
 
-//Заполнение выходного буфера массивом для одного шага вертикального сдвига}
+//Заполнение выходного буфера массивом для одного шага вертикального сдвига
 procedure shift;
 begin
   HC595($cb);
@@ -258,7 +217,7 @@ begin
   HC595($cf);
 end;
 
-//Заполнение выходного буфера массивом для "слива" накопленного изображения в сдвиговый регистр}
+//Заполнение выходного буфера массивом для "слива" накопленного изображения в сдвиговый регистр
 procedure shift2;
 begin
   shift;
@@ -279,11 +238,12 @@ begin
   HC595($cf);
 end;
 
-//{Заполнение выходного буфера массивом для одного шага вертикального сдвига + сигнал SUB для очитки области изображения}
+//Заполнение выходного буфера массивом для одного шага вертикального сдвига + сигнал SUB для очитки области изображения
 procedure shift3;
 begin
   HC595($cb);
   HC595($db);
+  //SUB
   HC595($9a);
   HC595($ba);
   HC595($aa);
@@ -292,7 +252,9 @@ begin
   HC595($cf);
 end;
 
-{Заполнение выходного буфера массивом для одного шага вертикального сдвига + сигнал SUB для очитки области изображения}
+//Заполнение выходного буфера массивом для:
+//Очистка горизонтального сдвига. Если его не очистить,
+//то накопленный в нем паразитный заряд будет добавлен в первую строку изображения
 procedure clearline;
 const dout : array[0..1] of byte = (portsecond,portfirst);
 var x:word;
@@ -309,7 +271,7 @@ end;
 //Очистка сдвигового регистра. Если его не очистить,
 //то накопленный в нем заряд будет добавлен в изображение.
 //Очищается весь регистр вместе с "темными" и неиспользуемыми строками.
-//Операция проводится перед "сливом" изображения в сдвиговый регистр.}
+//Операция проводится перед "сливом" изображения в сдвиговый регистр
 procedure clearframe;
 var y:word;
 begin
@@ -332,6 +294,51 @@ begin
   end;
 end;
 
+// Хитрое преобразование считанного буфера FT2232HL в буферный массив изображения
+//из-за особенностей AD9822 считываем сначала старший байт, потом младший, а в delphi наоборот.
+//Используем также тип integer32, а не word16 из-за переполнения при последующих операциях
+
+//собственно само чтение массива через порт ADBUS
+procedure posl.Execute;
+var x,y,x1:word;
+begin
+  for y:= mYn to mYn+mdeltY-1 do
+  begin
+    if mbin = 1 then
+    begin
+      Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
+      for x:=0 to mdeltX - 1 do
+      begin
+        x1:=x+mXn;
+        bufim[2*x1,2*y]:=swap(FT_In_Buffer[4*x]);
+        bufim[2*x1,2*y+1]:=swap(FT_In_Buffer[4*x+1]);
+        bufim[2*x1+1,2*y+1]:=swap(FT_In_Buffer[4*x+2]);
+        bufim[2*x1+1,2*y]:=swap(FT_In_Buffer[4*x+3]);
+      end;
+    end
+    else begin
+      Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
+      for x:=0 to mdeltX - 1 do
+      begin
+        x1:=x+mXn;
+        bufim[2*x1,2*y]:=swap(FT_In_Buffer[x]);
+        bufim[2*x1+1,2*y]:=swap(FT_In_Buffer[x]);
+        bufim[2*x1+1,2*y+1]:=swap(FT_In_Buffer[x]);
+        bufim[2*x1,2*y+1]:=swap(FT_In_Buffer[x]);
+      end;
+    end;
+  end;
+end;
+
+//создание потока с самоликвидацией
+procedure ComRead;
+begin
+  co:=posl.Create(true);
+  co.FreeOnTerminate:=true;
+  co.Priority:=tpNormal;
+  co.Resume;
+end;
+
 //Используется 2 режима:
 //1.Цветной без бининга.
 //2.Ч/Б с бинингом 2*2.
@@ -340,13 +347,12 @@ end;
 //поэтому количество строк для этих двух режимиов одинаковое.
 //Соответствия процедур:
 //readframe, display, display2 - для 1 режима,
-//readframe2, display3, display4 - для 2 режима}
-//Заполнение выходного буфера массивом и собственно сама операция чтения кадра в 1 режиме}
+//readframe2, display3, display4 - для 2 режима
+//Заполнение выходного буфера массивом и собственно сама операция чтения кадра в 1 режиме
 procedure readframe(bin:integer;expoz:integer);
 const dout : array[0..4] of byte = (portsecond,portsecond+8,portfirst+8,portfirst,portsecond+$28);
 var x,y:integer;
 begin
-//camera reading ccd
   cameraState := cameraReading;
   Get_USB_Device_Status(FT_CAM8A);
   if FT_Q_Bytes <> 0 then Purge_USB_Device_In(FT_CAM8A);
@@ -359,8 +365,8 @@ begin
     begin
       shift3;
       for y:=0 to expoz-52 do
-        for x:=0 to 416 do
-          HC595($cf);
+      for x:=0 to 416 do
+        HC595($cf);
     end;
     clearline2;
     clearframe;
@@ -388,21 +394,21 @@ begin
     adress:=0;
     shift;
     for x:=0 to dx-1+4*mXn do
-      begin
-        FT_Out_Buffer[adress+0]:=dout[0];
-        FT_Out_Buffer[adress+1]:=dout[3];
-        inc(adress,2);
-      end;
+    begin
+      FT_Out_Buffer[adress+0]:=dout[0];
+      FT_Out_Buffer[adress+1]:=dout[3];
+      inc(adress,2);
+    end;
     if bin = 1 then
     begin
       for x:=0 to 4 do
-        begin
-          FT_Out_Buffer[adress+0]:=dout[0];
-          FT_Out_Buffer[adress+1]:=dout[0];
-          FT_Out_Buffer[adress+2]:=dout[3];
-          FT_Out_Buffer[adress+3]:=dout[3];
-          inc(adress,4);
-        end;
+      begin
+        FT_Out_Buffer[adress+0]:=dout[0];
+        FT_Out_Buffer[adress+1]:=dout[0];
+        FT_Out_Buffer[adress+2]:=dout[3];
+        FT_Out_Buffer[adress+3]:=dout[3];
+        inc(adress,4);
+      end;
       FT_Out_Buffer[adress+0]:=dout[0];
       FT_Out_Buffer[adress+1]:=dout[0];
       FT_Out_Buffer[adress+2]:=dout[3];
@@ -421,8 +427,7 @@ begin
     end
     else begin
       for x:=0 to 4 do
-        begin
-          //?????????? ??? ??????, ???? ?????? ?????? RS ?????? ??? ??????? 4 - ?? ???????
+      begin
           FT_Out_Buffer[adress+0]:=dout[0];
           FT_Out_Buffer[adress+1]:=dout[0];
           FT_Out_Buffer[adress+2]:=dout[0]+$40;
@@ -434,8 +439,7 @@ begin
           FT_Out_Buffer[adress+8]:=dout[3];
           FT_Out_Buffer[adress+9]:=dout[3];
           inc(adress,10);
-        end;
-      //?????????? ??? ??????, ???? ?????? ?????? RS ?????? ??? ??????? 4 - ?? ???????
+      end;
       FT_Out_Buffer[adress+0]:=dout[0];
       FT_Out_Buffer[adress+1]:=dout[0];
       FT_Out_Buffer[adress+2]:=dout[0]+$40;
@@ -449,7 +453,6 @@ begin
       inc(adress,10);
       for x:=0 to mdeltX-2 do
       begin
-        //?????????? ??? ??????, ???? ?????? ?????? RS ?????? ??? ??????? 4 - ?? ???????
         FT_Out_Buffer[adress+0]:=dout[0];
         FT_Out_Buffer[adress+1]:=dout[0]-8;
         FT_Out_Buffer[adress+2]:=dout[0]+$40;
@@ -469,13 +472,28 @@ begin
     FT_Out_Buffer[adress+3]:=dout[3];
     inc(adress,4);
     for x:=0 to dx2-1+6000-4*mdeltX-4*mXn do
-      begin
-        FT_Out_Buffer[adress+0]:=dout[0];
-        FT_Out_Buffer[adress+1]:=dout[3];
-        inc(adress,2);
-      end;
+    begin
+      FT_Out_Buffer[adress+0]:=dout[0];
+      FT_Out_Buffer[adress+1]:=dout[3];
+      inc(adress,2);
+    end;
     Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
   end;
+  imageReady := true;
+  cameraState:=cameraDownload;
+  cameraState:=cameraIdle;
+end;
+
+procedure ExposureTimerTick; stdcall;
+begin
+  canStopExposureNow := false;
+  KillTimer (0,ExposureTimer);
+  adress:=0;
+  //on +15V
+  HC595($cf);
+  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  readframe (mBin, 1000);
+  canStopExposureNow := true;
 end;
 
 //off +15V
@@ -485,57 +503,69 @@ begin
   adress:=0;
   HC595($4f);
   Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  canStopExposureNow := true;
 end;
 
-procedure ExposureTimerTick; stdcall;
+//Stop Exposure Timer, purge FTDI FT2232HL buffers and frame bufeer
+procedure StopExposure;
 begin
   KillTimer (0,ExposureTimer);
-  cameraState := cameraReading;
-  adress:=0;
-  HC595($cf); //on +15V
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
-  readframe (mBin, 1000);
+  Purge_USB_Device_In(FT_CAM8A);
+  cameraState := cameraIdle;
+  imageReady := true;
 end;
 
-//Connect camera, return bool result}
+//проверка каждый 0,1 сек на протяжении 15 сек
+procedure StopExposureTimerTick; stdcall;
+begin
+  if (canStopExposureNow) then
+    begin
+      KillTimer (0,StopExposureTimer);
+      StopExposure;
+    end;
+  checkCanStopExposureCount:=checkCanStopExposureCount+1;
+  if (checkCanStopExposureCount=150) then KillTimer (0,StopExposureTimer);
+end;
+
+//Connect camera, return bool result
 //Опрос подключенных устройств и инициализация AD9822
 function cameraConnect () : WordBool; stdcall; export;
-var FT_OP_flag : boolean;
+var  FT_OP_flag : boolean;
 begin
   FT_OP_flag:=true;
   if (FT_OP_flag) then
-    begin
+  begin
       if Open_USB_Device_By_Serial_Number(FT_CAM8A,'CAM8A') <> FT_OK then FT_OP_flag := false;
-    end;
+  end;
   if (FT_OP_flag) then
-    begin
+  begin
       if Open_USB_Device_By_Serial_Number(FT_CAM8B,'CAM8B')  <> FT_OK then FT_OP_flag := false;
-    end;
+  end;
   if (FT_OP_flag) then
-    begin
+  begin
       // BitMode
       if Set_USB_Device_BitMode(FT_CAM8B,$ff, $01)  <> FT_OK then FT_OP_flag := false;
-    end;
+  end;
   if (FT_OP_flag) then
-    begin
-      //максимальное быстродействие
-      Set_USB_Device_LatencyTimer(FT_CAM8B,2);
-      Set_USB_Device_LatencyTimer(FT_CAM8A,2);
-      Set_USB_Device_TimeOuts(FT_CAM8A,4000,4000);
-      Set_USB_Device_TimeOuts(FT_CAM8B,4000,4000);
-      Purge_USB_Device_In(FT_CAM8A);
-      Purge_USB_Device_OUT(FT_CAM8A);
-      Purge_USB_Device_OUT(FT_CAM8B);
-      //режим AD9822 - канал G,2 вольта опорность, CDS режим
-      AD9822(0,$58);
-      AD9822(1,$a0);
-      AD9822(6,0);
-      //усиление устанавливается такое. что не переполняется АЦП
-      AD9822(3,34);
-      adress:=0;
-      HC595($cf);
-      Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
-    end;
+  begin
+    //максимальное быстродействие
+    Set_USB_Device_LatencyTimer(FT_CAM8B,2);
+    Set_USB_Device_LatencyTimer(FT_CAM8A,2);
+    Set_USB_Device_TimeOuts(FT_CAM8A,4000,4000);
+    Set_USB_Device_TimeOuts(FT_CAM8B,4000,4000);
+    Purge_USB_Device_In(FT_CAM8A);
+    Purge_USB_Device_OUT(FT_CAM8A);
+    Purge_USB_Device_OUT(FT_CAM8B);
+    //режим AD9822 - канал G,2 вольта опорность, CDS режим
+    AD9822(0,$58);
+    AD9822(1,$a0);
+    AD9822(6,0);
+    //усиление устанавливается такое. что не переполняется АЦП
+    AD9822(3,34);
+    adress:=0;
+    HC595($cf);
+    Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+  end;
   isConnected := FT_OP_flag;
   cameraState := cameraIdle;
   if(FT_OP_flag=false) then cameraState := cameraError;
@@ -543,7 +573,7 @@ begin
 end;
 
 //Disconnect camera, return bool result
-function CameraDisconnect (): WordBool; stdcall; export;
+function cameraDisconnect (): WordBool; stdcall; export;
 var FT_OP_flag : boolean;
 begin
   FT_OP_flag := true;
@@ -561,9 +591,10 @@ end;
 
 function cameraStartExposure (Bin,StartX,StartY,NumX,NumY : integer; Duration : double; light : WordBool) : WordBool; stdcall; export;
 begin
-  mBin := Bin; //???????
-  if light then zatv:=0 else
-  zatv:=1;
+  canStopExposureNow := false;
+  mBin := Bin;
+  if light then zatv:=0
+  else zatv:=1;
   if (NumY+StartY > CameraHeight)or(StartY < 0)or(NumY <= 0) then
   begin
     mYn:=0;
@@ -580,14 +611,12 @@ begin
   end
   else begin
     mXn:=StartX div 2;
-    mdeltX:=NumX div 2;
+    mdeltX:=NumX div 2
   end;
   imageReady := false;
-  //camera exposing
   cameraState := cameraExposing;
   if Duration > 0.499 then
   begin
-    // clearwin
     adress:=0;
     shift3;
     Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
@@ -595,7 +624,6 @@ begin
     Timer15V := settimer (0,0,1000,@Timer15VTick);
   end
   else begin
-    cameraState := cameraReading;
     readframe (mBin,round(Duration*1000));
   end;
   Result := true;
@@ -603,7 +631,14 @@ end;
 
 //Stop camera exposure when it is possible
 function cameraStopExposure : WordBool; stdcall; export;
+
 begin
+  if (canStopExposureNow) then StopExposure
+  else
+    begin
+      checkCanStopExposureCount:=0;
+      StopExposureTimer := settimer (0,0,100,@StopExposureTimerTick);
+    end;
   Result := true;
 end;
 
@@ -619,18 +654,15 @@ begin
   Result := imageReady;
 end;
 
-//Get back pointer to image}
+//Get back pointer to image
 function cameraGetImage : dword; stdcall; export;
 begin
-  cameraState := cameraDownload;
-  cameraState := cameraIdle;
   Result := dword(@bufim);
 end;
 
 //Set camera gain, return bool result
 function cameraSetGain (val : integer) : WordBool; stdcall; export;
 begin
-  //усиление AD9822
   AD9822(3,val);
   Result :=true;
 end;
@@ -641,7 +673,6 @@ var x : integer;
 begin
   x:=abs(2*val);
   if val < 0 then x:=x+256;
-  //смещение AD9822
   AD9822(6,x);
   Result :=true;
 end;
@@ -657,5 +688,7 @@ exports cameraGetImage;
 exports cameraSetGain;
 exports cameraSetOffset;
 
+
 begin
 end.
+
