@@ -7,14 +7,16 @@
 // 27-nov-2014 VSS 0.55 Only version was changed
 // 08-mar-2015 VSS 0.6 Some code refactoring, add Stop exposure
 // --------------------------------------------------------------------------------
-library cam8sll06;
-uses
-Classes,
-SysUtils,
-MyD2XX,
-Windows;
-{$R *.res}
 
+library cam8sll06;
+
+uses
+  Classes,
+  SysUtils,
+  MyD2XX,
+  Windows;
+
+{$R *.res}
 const
 //ширина изображения
 CameraWidth = 3000;
@@ -38,8 +40,7 @@ cameraReading = 3;
 cameraDownload = 4;
 cameraError = 5;
 
-//driver image type
-type camera_image_type = array [0..CameraHeight-1,0..CameraWidth-1] of integer;
+type  camera_image_type = array[0..CameraWidth-1,0..CameraHeight-1] of integer;    //driver image type
 
 //Class for reading thread}
 posl = class(TThread)
@@ -688,7 +689,7 @@ exports cameraGetImage;
 exports cameraSetGain;
 exports cameraSetOffset;
 
-
 begin
 end.
+
 

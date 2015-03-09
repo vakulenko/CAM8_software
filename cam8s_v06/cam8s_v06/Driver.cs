@@ -1089,11 +1089,11 @@ namespace ASCOM.cam8s_v06
                     for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
                         for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
                         {
-                            pixelpoint = (int*)(zeropixelpoint + (j * ccdWidth + i));
+                            pixelpoint = (int*)(zeropixelpoint + (i* ccdHeight + j));
                             cameraImageArray.SetValue(*pixelpoint, k);
                             k++;
                         }
-                }             
+                }
                 return cameraImageArray;
             }
         }
