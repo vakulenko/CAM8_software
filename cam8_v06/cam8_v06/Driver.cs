@@ -121,7 +121,7 @@ namespace ASCOM.cam8_v06
                         return;
                     }
                     tecSendCommand(infoCmd);
-                    Thread.Sleep(200);
+                    Thread.Sleep(1000);
                     if (tecReadPacket() == 1)
                     {
                         tecIsConnected = false;
