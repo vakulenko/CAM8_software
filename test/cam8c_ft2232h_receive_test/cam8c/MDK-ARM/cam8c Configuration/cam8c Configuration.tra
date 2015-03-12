@@ -36,7 +36,7 @@
 ### ADS-LD Output File: 'cam8c Configuration\cam8c Configuration.axf'
 ### ADS-LD Command File: 'cam8c Configuration\cam8c Configuration.lnp'
 ### Checking for dirty Components...
-### Creating CmdFile 'cam8c Configuration\cam8c Configuration.lnp', Handle=0x00000318
+### Creating CmdFile 'cam8c Configuration\cam8c Configuration.lnp', Handle=0x00000358
 ### Writing '.lnp' file
 ### ADS-LD Command file 'cam8c Configuration\cam8c Configuration.lnp' is ready.
 ### ADS-LD: About to start ADS-LD Thread.

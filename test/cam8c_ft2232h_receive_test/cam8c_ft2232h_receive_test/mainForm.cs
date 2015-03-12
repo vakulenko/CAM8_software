@@ -86,20 +86,28 @@ namespace cam8c_ft2232h_receive_test
         private void readframeBtn_Click(object sender, EventArgs e)
         {
             byte[] cmd = { 0x33};         
-            string readData;
-            UInt32 numBytesRead = 0, x, summ=0;
-
+            UInt32 numBytesRead = 0, i, summ = 0;
+            string[] frame = new string[200];
+                           
             using (StreamWriter writer = new StreamWriter("debug.txt"))
             {
-                deviceComPort.Write(cmd, 0, cmd.Length);
-                for (x = 0; x < 200; x++)
-                {
-                    ftdiDevice.Read(out readData, 60000, ref numBytesRead);
-                    summ = summ + numBytesRead;
-                    writer.WriteLine(x.ToString()+" "+numBytesRead.ToString());
+                using (StreamWriter rawwriter = new StreamWriter("frame.raw"))
+                { 
+                    deviceComPort.Write(cmd, 0, cmd.Length);
+                    for (i = 0; i < 200; i++)
+                    {
+                        ftdiDevice.Read(out frame[i], 60000, ref numBytesRead);                        
+                        summ = summ + numBytesRead;
+                        writer.WriteLine(i.ToString() + " " + numBytesRead.ToString());                       
+                    }
+                    writer.WriteLine("summary: " + summ.ToString() + "bytes");
+                    listBox.Items.Add("Received " + summ.ToString() + " bytes from FT2232H");
+
+                    for (i = 0; i < 200; i++)
+                    {
+                        rawwriter.Write(frame[i]);
+                    }
                 }
-                writer.WriteLine("summary: "+summ.ToString()+"bytes");
-                listBox.Items.Add("Received " + summ.ToString() + " bytes from FT2232H");                
             }            
         }
     }

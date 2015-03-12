@@ -310,14 +310,15 @@ void uartReceiveThread(void const * argument)
 /* readFrameThread function */
 void readFrameThread(void const * argument)
 {
-	uint32_t i,j;
+	uint32_t i;
   for(;;)
   {
-		xSemaphoreTake(readFrameSemaphore, portMAX_DELAY); 
+		xSemaphoreTake(readFrameSemaphore, portMAX_DELAY); 		
 		for (i=0;i<12000000;i++)
 		{
-			GPIOE->ODR = 0x0200;		//PE9
-			GPIOE->ODR = 0x0000;			
+			GPIOE->ODR = 0x1200|((i%64)<<10);		//PE9
+			GPIOE->ODR = 0x1000|((i%64)<<10);											
+
 		}
   }
 }
