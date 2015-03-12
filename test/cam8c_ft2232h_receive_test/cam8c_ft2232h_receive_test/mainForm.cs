@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO.Ports;
+using System.IO;
 using System.Threading;
 
 using FTD2XX_NET;
@@ -43,8 +44,9 @@ namespace cam8c_ft2232h_receive_test
                 readframeBtn.Enabled = false;
             }
             else
-            {                
-                deviceComPort = new SerialPort(comPortComboBox.SelectedItem.ToString(), 9600, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
+            {       
+                
+                deviceComPort = new SerialPort(comPortComboBox.SelectedItem.ToString(), 38400, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
                                 
                 try
                 {
@@ -65,7 +67,7 @@ namespace cam8c_ft2232h_receive_test
                 {
                     ftdiDevice.OpenBySerialNumber("CAM8CA");
                     ftdiDevice.SetLatency(2);
-                    ftdiDevice.SetTimeouts(4000, 4000);
+                    ftdiDevice.SetTimeouts(10000, 10000);
                     ftdiDevice.Purge(FTDI.FT_PURGE.FT_PURGE_RX | FTDI.FT_PURGE.FT_PURGE_TX);
                 }
                 catch
@@ -83,13 +85,22 @@ namespace cam8c_ft2232h_receive_test
 
         private void readframeBtn_Click(object sender, EventArgs e)
         {
-            uint numBytesAvailable=0;
+            byte[] cmd = { 0x33};         
+            string readData;
+            UInt32 numBytesRead = 0, x, summ=0;
 
-            byte[] cmd = { 0x33 };
-            deviceComPort.Write(cmd, 0, cmd.Length);
-            //read ftdi status
-            ftdiDevice.GetRxBytesAvailable(ref numBytesAvailable);
-            outLabel.Text = "IN Buffer contains "+numBytesAvailable.ToString()+ " bytes";
+            using (StreamWriter writer = new StreamWriter("debug.txt"))
+            {
+                deviceComPort.Write(cmd, 0, cmd.Length);
+                for (x = 0; x < 200; x++)
+                {
+                    ftdiDevice.Read(out readData, 60000, ref numBytesRead);
+                    summ = summ + numBytesRead;
+                    writer.WriteLine(x.ToString()+" "+numBytesRead.ToString());
+                }
+                writer.WriteLine("summary: "+summ.ToString()+"bytes");
+                listBox.Items.Add("Received " + summ.ToString() + " bytes from FT2232H");                
+            }            
         }
     }
 }

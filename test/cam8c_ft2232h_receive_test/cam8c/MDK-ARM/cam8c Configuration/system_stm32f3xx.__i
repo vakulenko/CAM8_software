@@ -1,0 +1,4 @@
+-c --cpu Cortex-M4.fp -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Inc -I..\Drivers\STM32F3xx_HAL_Driver\Inc -I..\Middlewares\Third_Party\FreeRTOS\Source\portable\RVDS\ARM_CM4F -I..\Middlewares\Third_Party\FreeRTOS\Source\include -I..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS -I..\Drivers\CMSIS\Include -I..\Drivers\CMSIS\Device\ST\STM32F3xx\Include --C99 
+-I C:\Keil\ARM\RV31\INC 
+-I C:\Keil\ARM\CMSIS\Include 
+-DUSE_HAL_DRIVER -DSTM32F303xC -o "cam8c Configuration\system_stm32f3xx.o" --omf_browse "cam8c Configuration\system_stm32f3xx.crf" --depend "cam8c Configuration\system_stm32f3xx.d" "..\Drivers\CMSIS\Device\ST\STM32F3xx\Source\Templates\system_stm32f3xx.c"

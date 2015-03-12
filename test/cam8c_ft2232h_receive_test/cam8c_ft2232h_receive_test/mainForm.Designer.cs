@@ -31,14 +31,14 @@
             this.connectBtn = new System.Windows.Forms.Button();
             this.readframeBtn = new System.Windows.Forms.Button();
             this.comPortComboBox = new System.Windows.Forms.ComboBox();
-            this.outLabel = new System.Windows.Forms.Label();
+            this.listBox = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // connectBtn
             // 
-            this.connectBtn.Location = new System.Drawing.Point(72, 12);
+            this.connectBtn.Location = new System.Drawing.Point(130, 14);
             this.connectBtn.Name = "connectBtn";
-            this.connectBtn.Size = new System.Drawing.Size(75, 23);
+            this.connectBtn.Size = new System.Drawing.Size(102, 23);
             this.connectBtn.TabIndex = 0;
             this.connectBtn.Text = "Connect";
             this.connectBtn.UseVisualStyleBackColor = true;
@@ -46,10 +46,9 @@
             // 
             // readframeBtn
             // 
-            this.readframeBtn.Enabled = false;
             this.readframeBtn.Location = new System.Drawing.Point(12, 52);
             this.readframeBtn.Name = "readframeBtn";
-            this.readframeBtn.Size = new System.Drawing.Size(135, 23);
+            this.readframeBtn.Size = new System.Drawing.Size(220, 23);
             this.readframeBtn.TabIndex = 1;
             this.readframeBtn.Text = "Read Frame";
             this.readframeBtn.UseVisualStyleBackColor = true;
@@ -58,33 +57,31 @@
             // comPortComboBox
             // 
             this.comPortComboBox.FormattingEnabled = true;
-            this.comPortComboBox.Location = new System.Drawing.Point(12, 14);
+            this.comPortComboBox.Location = new System.Drawing.Point(12, 16);
             this.comPortComboBox.Name = "comPortComboBox";
-            this.comPortComboBox.Size = new System.Drawing.Size(54, 21);
+            this.comPortComboBox.Size = new System.Drawing.Size(100, 21);
             this.comPortComboBox.TabIndex = 4;
             // 
-            // outLabel
+            // listBox
             // 
-            this.outLabel.AutoSize = true;
-            this.outLabel.Location = new System.Drawing.Point(12, 94);
-            this.outLabel.Name = "outLabel";
-            this.outLabel.Size = new System.Drawing.Size(92, 13);
-            this.outLabel.TabIndex = 5;
-            this.outLabel.Text = "IN Buffer contains";
+            this.listBox.FormattingEnabled = true;
+            this.listBox.Location = new System.Drawing.Point(12, 83);
+            this.listBox.Name = "listBox";
+            this.listBox.Size = new System.Drawing.Size(220, 95);
+            this.listBox.TabIndex = 5;
             // 
             // mainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(160, 190);
-            this.Controls.Add(this.outLabel);
+            this.ClientSize = new System.Drawing.Size(254, 200);
+            this.Controls.Add(this.listBox);
             this.Controls.Add(this.comPortComboBox);
             this.Controls.Add(this.readframeBtn);
             this.Controls.Add(this.connectBtn);
             this.Name = "mainForm";
             this.Text = "cam8c_test";
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -93,7 +90,7 @@
         private System.Windows.Forms.Button connectBtn;
         private System.Windows.Forms.Button readframeBtn;
         private System.Windows.Forms.ComboBox comPortComboBox;
-        private System.Windows.Forms.Label outLabel;
+        private System.Windows.Forms.ListBox listBox;
     }
 }
 
