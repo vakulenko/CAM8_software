@@ -1087,13 +1087,26 @@ namespace ASCOM.cam8s_v07
                     cameraImageArray = Array.CreateInstance(typeof(int), cameraNumX * cameraNumY);
                     int i, j, k = 0;
 
-                    for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
-                        for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
-                        {
-                            pixelpoint = (int*)(zeropixelpoint + (i * ccdHeight + j));
-                            cameraImageArray.SetValue(*pixelpoint, k);
-                            k++;
-                        }
+                    if (cameraBinX == 1)
+                    {
+                        for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
+                            for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
+                            {
+                                pixelpoint = (int*)(zeropixelpoint + (i * ccdHeight + j));
+                                cameraImageArray.SetValue(*pixelpoint, k);
+                                k++;
+                            }
+                    }
+                    else
+                    {
+                        for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
+                            for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
+                            {
+                                pixelpoint = (int*)(zeropixelpoint + (2 * i * ccdHeight + j * 2));
+                                cameraImageArray.SetValue(*pixelpoint, k);
+                                k++;
+                            }
+                    }
                 }
                 return cameraImageArray;
             }
@@ -1383,7 +1396,7 @@ namespace ASCOM.cam8s_v07
                                            " cameraNumY=" + cameraNumY.ToString() +
                                            " Duration=" + Duration.ToString() +
                                            " Light=" + true.ToString());
-            cameraStartExposure((int)cameraBinX, cameraStartX, cameraStartY, cameraNumX, cameraNumY, Duration, Light);
+            cameraStartExposure((int)cameraBinX, cameraStartX*cameraBinX, cameraStartY*cameraBinY, cameraNumX*cameraBinX, cameraNumY*cameraBinY, Duration, Light);
         }
 
         public int StartX
