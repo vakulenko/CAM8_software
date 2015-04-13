@@ -15,7 +15,8 @@ uses
   Classes,
   SysUtils,
   MyD2XX,
-  Windows;
+  Windows,
+  SyncObjs;
 
 {$R *.res}
 const
@@ -80,6 +81,8 @@ mYn,mdeltY:integer;
 //начало чтения и количество по столбцам
 mXn,mdeltX:integer;
 zatv:byte;
+//event of successful ccd reading
+hev:TEvent;
 
 // Небольшое пояснение работы с FT2232LH.
 //Всегда используется такой прием:
@@ -330,6 +333,7 @@ begin
       end;
     end;
   end;
+  hev.SetEvent;
 end;
 
 //создание потока с самоликвидацией
@@ -356,10 +360,8 @@ const dout : array[0..4] of byte = (portsecond,portsecond+8,portfirst+8,portfirs
 var x,y:integer;
 begin
   cameraState := cameraReading;
-  Get_USB_Device_Status(FT_CAM8A);
-  if FT_Q_Bytes <> 0 then Purge_USB_Device_In(FT_CAM8A);
-  Get_USB_Device_Status(FT_CAM8B);
-  if FT_TxQ_Bytes <> 0 then Purge_USB_Device_Out(FT_CAM8B);
+  Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
+  Purge_USB_Device(FT_CAM8B,FT_PURGE_TX);
   adress:=0;
   if expoz > 52 then
   begin
@@ -481,6 +483,7 @@ begin
     end;
     Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
   end;
+  hev.WaitFor(4000);
   imageReady := true;
   cameraState:=cameraIdle;
 end;
@@ -511,7 +514,7 @@ end;
 procedure StopExposure;
 begin
   KillTimer (0,ExposureTimer);
-  Purge_USB_Device_In(FT_CAM8A);
+  Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
   cameraState := cameraIdle;
   imageReady := true;
 end;
@@ -554,9 +557,8 @@ begin
     Set_USB_Device_LatencyTimer(FT_CAM8A,2);
     Set_USB_Device_TimeOuts(FT_CAM8A,4000,4000);
     Set_USB_Device_TimeOuts(FT_CAM8B,4000,4000);
-    Purge_USB_Device_In(FT_CAM8A);
-    Purge_USB_Device_OUT(FT_CAM8A);
-    Purge_USB_Device_OUT(FT_CAM8B);
+    Purge_USB_Device(FT_CAM8A,FT_PURGE_RX or FT_PURGE_TX);
+    Purge_USB_Device(FT_CAM8B,FT_PURGE_RX or FT_PURGE_TX);
     //режим AD9822 - канал G,2 вольта опорность, CDS режим
     AD9822(0,$58);
     AD9822(1,$a0);
@@ -692,6 +694,7 @@ exports cameraSetGain;
 exports cameraSetOffset;
 
 begin
+  hev := TEvent.Create(nil, false, false, '');
 end.
 
 
