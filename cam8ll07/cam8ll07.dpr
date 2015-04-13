@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------
 // ASCOM Camera driver low-level interaction library for cam8_v0.7
 // Edit Log:
 // Date		    	Who	 Vers	  Description
@@ -20,7 +20,8 @@ uses
   Classes,
   ExtCtrls,
   MyD2XX,
-  Windows;
+  Windows,
+  SyncObjs;
 
 {$R *.res}
 const
@@ -85,6 +86,8 @@ bufim:CameraImageType;
 mYn,mdeltY:integer;
 //начало чтения и количество по столбцам
 mXn,mdeltX:integer;
+//event of successful ccd reading
+hev:TEvent;
 
 // Небольшое пояснение работы с FT2232LH.
 // Всегда используется такой прием:
@@ -335,6 +338,7 @@ begin
             end;
         end;
     end;
+  hev.SetEvent;
   imageReady := true;
   cameraState:=cameraIdle;
 end;
@@ -504,6 +508,7 @@ begin
   HC595($f9);
   Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
   readframe (mBin, 1000);
+  hev.WaitFor(4000);
   canStopExposureNow := true;
 end;
 
@@ -641,6 +646,7 @@ begin
   else
     begin
       readframe (mBin,round(Duration*1000));
+      hev.WaitFor(4000);
     end;
   Result := true;
 end;
@@ -709,4 +715,6 @@ exports cameraGetImageReady;
 exports cameraGetImage;
 
 begin
+  hev := TEvent.Create(nil, false, false, '');
 end.
+

@@ -605,13 +605,13 @@ End;
 
 Function Purge_USB_Device_Out(var FT: DWord) : FT_Result;
 Begin
-Result :=  FT_Purge(FT,FT_PURGE_RX);
+Result :=  FT_Purge(FT,FT_PURGE_TX);
 If Result <> FT_OK then FT_Error_Report('FT_Purge RX',Result);
 End;
 
 Function Purge_USB_Device_In(var FT: DWord) : FT_Result;
 Begin
-Result :=  FT_Purge(FT,FT_PURGE_TX);
+Result :=  FT_Purge(FT,FT_PURGE_RX);
 If Result <> FT_OK then FT_Error_Report('FT_Purge TX',Result);
 End;
 

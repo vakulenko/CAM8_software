@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, MyD2XX, ComCtrls, Buttons, IniFiles, Spin, Math;
+  Dialogs, StdCtrls, ExtCtrls, MyD2XX, ComCtrls, Buttons, IniFiles, Spin, Math, SyncObjs;
 
 type
   TForm1 = class(TForm)
@@ -99,6 +99,7 @@ var
   red,green,blue:single;                                    //коэффициенты цветности RGB
   zap:boolean;                                              //
   dt0,dt:TDateTime;
+  hev:TEvent;
 
 implementation
 
@@ -120,6 +121,7 @@ begin
    for x:=0 to kol - 2 do bufim[x,y]:=FT_In_Buffer[2*x+2]+256*FT_In_Buffer[2*x+1];
    bufim[kol-1,y]:=256*FT_In_Buffer[2*kol-1];
   end;
+ hev.SetEvent; 
 end;
 
 function ComRead:integer;                                   //создание потока с самоликвидацией
@@ -622,10 +624,13 @@ begin
 
     Set_USB_Device_LatencyTimer(FT_CAM8B,2);       //максимальное быстродействие
     Set_USB_Device_LatencyTimer(FT_CAM8A,2);
+    hev := TEvent.Create(nil, false, false, '');
 
-
-    Purge_USB_Device_In(FT_CAM8A);
-    Purge_USB_Device_In(FT_CAM8B);
+    //Purge_USB_Device_In(FT_CAM8A);
+    //Purge_USB_Device_In(FT_CAM8B);
+    
+    Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
+    Purge_USB_Device(FT_CAM8B,FT_PURGE_RX);
     adress:=0;
     AD9822(0,$58);             //режим AD9822 - канал G,2 вольта опорность, CDS режим
     AD9822(1,$a0);             //смещение нулевое
@@ -844,11 +849,13 @@ Timer1.Enabled:=false;
  if CheckBox1.Checked then                                   //собственно считать изображение и отобразить
  begin
   readframe2(true);
+  hev.WaitFor(4000);
   display3(true);
   display4;
  end  else
  begin
   readframe(true);
+  hev.WaitFor(4000);
   display(true);
   display2;
  end;

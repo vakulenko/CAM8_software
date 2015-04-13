@@ -5,8 +5,6 @@ Uses Windows,Forms,Dialogs, Messages, SysUtils, Variants, Classes, Graphics, Con
 
 Type FT_Result = Integer;
 
-
-
 // Device Info Node structure for info list functions
 type FT_Device_Info_Node = record
   Flags         : DWord;
@@ -111,8 +109,9 @@ Function Set_USB_Device_DTR : FT_Result;
 Function Clr_USB_Device_DTR : FT_Result;
 Function Get_USB_Device_ModemStatus : FT_Result;
 Function Set_USB_Device_Chars : FT_Result;
-Function Purge_USB_Device_Out(var FT: DWord) : FT_Result;
-Function Purge_USB_Device_In(var FT: DWord) : FT_Result;
+Function Purge_USB_Device(var FT: DWord;mask:DWord) : FT_Result;
+{Function Purge_USB_Device_Out(var FT: DWord) : FT_Result;
+Function Purge_USB_Device_In(var FT: DWord) : FT_Result;}
 Function Set_USB_Device_TimeOuts(var FT: DWord;ReadTimeOut,WriteTimeOut:DWord) : FT_Result;
 Function Get_USB_Device_QueueStatus(var FT: DWord) : FT_Result;
 Function Set_USB_Device_Break_On : FT_Result;
@@ -148,9 +147,6 @@ Function Set_USB_Parameters(InSize, OutSize:Dword) : FT_Result;
 
 Function Get_USB_Driver_Version(DrVersion :  TDWordptr): FT_Result;
 Function Get_USB_Library_Version(LbVersion :  TDWordptr): FT_Result;
-
-
-
 
 Var
 // Port Handle Returned by the Open Function
@@ -602,8 +598,13 @@ Result :=  FT_SetChars(FT_Handle,FT_EVENT_Value,Events_On,FT_ERROR_Value,Errors_
 If Result <> FT_OK then FT_Error_Report('FT_SetChars',Result);
 End;
 
+Function Purge_USB_Device(var FT: DWord;mask:DWord) : FT_Result;
+Begin
+Result :=  FT_Purge(FT,mask);
+If Result <> FT_OK then FT_Error_Report('FT_Purge RX',Result);
+End;
 
-Function Purge_USB_Device_Out(var FT: DWord) : FT_Result;
+{Function Purge_USB_Device_Out(var FT: DWord) : FT_Result;
 Begin
 Result :=  FT_Purge(FT,FT_PURGE_RX);
 If Result <> FT_OK then FT_Error_Report('FT_Purge RX',Result);
@@ -614,7 +615,7 @@ Begin
 Result :=  FT_Purge(FT,FT_PURGE_TX);
 If Result <> FT_OK then FT_Error_Report('FT_Purge TX',Result);
 End;
-
+}
 
 Function Set_USB_Device_TimeOuts(var FT: DWord;ReadTimeOut,WriteTimeOut:DWord) : FT_Result;
 Begin
