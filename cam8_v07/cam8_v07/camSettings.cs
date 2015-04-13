@@ -13,8 +13,8 @@ namespace ASCOM.cam8_v07
     {
         const short minGain = 0;
         const short maxGain = 63;
-        const short minOffset = -63;
-        const short maxOffset = 63;
+        const short minOffset = -127;
+        const short maxOffset = 127;
         const short minBlevel = 0;
         const short maxBlevel = 255;
 

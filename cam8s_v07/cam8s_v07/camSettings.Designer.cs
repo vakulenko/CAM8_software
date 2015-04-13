@@ -56,8 +56,8 @@
             // offsetTrackBar
             // 
             this.offsetTrackBar.Location = new System.Drawing.Point(6, 91);
-            this.offsetTrackBar.Maximum = 63;
-            this.offsetTrackBar.Minimum = -63;
+            this.offsetTrackBar.Maximum = 127;
+            this.offsetTrackBar.Minimum = -127;
             this.offsetTrackBar.Name = "offsetTrackBar";
             this.offsetTrackBar.Size = new System.Drawing.Size(219, 37);
             this.offsetTrackBar.TabIndex = 35;
