@@ -88,7 +88,9 @@ mYn,mdeltY:integer;
 mXn,mdeltX:integer;
 //event of successful ccd reading
 hev:TEvent;
-
+//error Flag
+errorReadFlag : boolean;
+errorWriteFlag : boolean;
 // Небольшое пояснение работы с FT2232LH.
 // Всегда используется такой прием:
 //  1. Вначале заполняется буфер и исходными байтами (необходимой последовательности импульсов на выводах порта BDBUS).
@@ -309,13 +311,20 @@ end;
 //собственно само чтение массива через порт ADBUS
 procedure posl.Execute;
 var
-x,y,x1:word;
+x,y,x1,byteCnt:word;
+readFailed:boolean;
 begin
+  readFailed:=false;
   for y:= mYn to mYn+mdeltY-1 do
     begin
       if mBin = 1 then
         begin
-          Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
+          byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
+          if (byteCnt<>8*mdeltX) then
+          begin
+            readFailed:=true;
+            break;
+          end;
           for x:=0 to mdeltX - 1 do
             begin
               x1:=x+mXn;
@@ -327,7 +336,12 @@ begin
         end
       else
         begin
-          Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
+          byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
+          if (byteCnt<>2*mdeltX) then
+          begin
+            readFailed:=true;
+            break;
+          end;
           for x:=0 to mdeltX - 1 do
             begin
               x1:=x+mXn;
@@ -338,7 +352,15 @@ begin
             end;
         end;
     end;
-  hev.SetEvent;
+  if (readFailed) then
+  begin
+    errorReadFlag := true;
+    hev.SetEvent;
+    sleep(2000);
+    Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
+    Purge_USB_Device(FT_CAM8B,FT_PURGE_TX);
+  end
+  else hev.SetEvent;
   imageReady := true;
   cameraState:=cameraIdle;
 end;
@@ -578,6 +600,7 @@ begin
       Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
     end;
   isConnected := FT_OP_flag;
+  errorReadFlag := false;
   cameraState := cameraIdle;
   if(FT_OP_flag=false) then cameraState := cameraError;
   Result := isConnected;
@@ -607,6 +630,7 @@ end;
 function cameraStartExposure (Bin,StartX,StartY,NumX,NumY : integer; Duration : double; light : WordBool) : WordBool; stdcall; export;
 begin
   canStopExposureNow := false;
+  errorReadFlag := false;
   mbin := Bin;
   if (NumY+StartY > CameraHeight)or(StartY < 0)or(NumY <= 0) then
     begin
@@ -648,7 +672,6 @@ end;
 
 //Stop camera exposure when it is possible
 function cameraStopExposure : WordBool; stdcall; export;
-
 begin
   if (canStopExposureNow) then StopExposure
   else
@@ -698,6 +721,12 @@ begin
   Result :=true;
 end;
 
+//Get camera state, return int result
+function cameraIsError : WordBool; stdcall; export;
+begin
+  Result := errorReadFlag;
+end;
+
 exports cameraConnect;
 exports cameraDisconnect;
 exports cameraIsConnected;
@@ -708,6 +737,7 @@ exports cameraStopExposure;
 exports cameraGetCameraState;
 exports cameraGetImageReady;
 exports cameraGetImage;
+exports cameraIsError;
 
 begin
   hev := TEvent.Create(nil, false, false, '');
