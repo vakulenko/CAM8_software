@@ -174,7 +174,7 @@ begin
       dan[31]:=dan[31]+4;
       dan[32]:=dan[32]+4;
     end;
-  Write_USB_Device_Buffer(FT_CAM8B,@dan, kol);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@dan, kol);
 end;
 
 //Заполнение выходного буфера массивом для передачи байта val на выводы микросхемы HC595.
@@ -414,7 +414,7 @@ begin
             HC595($f9);
     end;
   shift2;
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
   comread;
   adress:=0;
   for y:=0 to dy-1+mYn do
@@ -513,7 +513,7 @@ begin
         end;
     end;
   //команда на вывод!!
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
 end;
 
 //время экспозиции завершилось, останаливаем таймера, запускаем процедуру чтения кадра
@@ -524,7 +524,7 @@ begin
   KillTimer (0,Timer15V);
   adress:=0;
   HC595($f9);
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
   readframe (mBin, 1000);
   hev.WaitFor(4000);
   canStopExposureNow := true;
@@ -536,7 +536,7 @@ begin
   KillTimer (0,Timer15V);
   adress:=0;
   HC595($79);
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
   canStopExposureNow := true;
 end;
 
@@ -567,6 +567,7 @@ function cameraConnect () : WordBool;  stdcall; export;
 var  FT_OP_flag : boolean;
 begin
   FT_OP_flag:=true;
+  errorWriteFlag:=false;
   if (FT_OP_flag) then
     begin
       if Open_USB_Device_By_Serial_Number(FT_CAM8A,'CAM8A') <> FT_OK then FT_OP_flag := false;
@@ -597,7 +598,7 @@ begin
       AD9822(3,34);
       adress:=0;
       HC595($f9);
-      Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+      if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
     end;
   isConnected := FT_OP_flag;
   errorReadFlag := false;
@@ -658,7 +659,7 @@ begin
     begin
       adress:=0;
       shift3;
-      Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+      if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
       ExposureTimer := settimer (0,0,round(Duration*1000-52),@ExposureTimerTick);
       Timer15V := settimer (0,0,1000,@Timer15VTick);
     end
@@ -685,7 +686,8 @@ end;
 //Get camera state, return int result
 function cameraGetCameraState : integer; stdcall; export;
 begin
-  Result := cameraState;
+  if (not errorWriteFlag) then Result := cameraState
+  else Result := cameraError;
 end;
 
 //Check ImageReady flag, is image ready for transfer - transfer image to driver and return bool ImageReady flag
