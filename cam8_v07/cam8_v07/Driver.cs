@@ -130,6 +130,15 @@ namespace ASCOM.cam8_v07
                         return;
                     }
                     tectl.LogMessage("Connect Set", "INFO packet received success");
+                    tecSendCommand(getCmd);
+                    Thread.Sleep(2000);
+                    if (tecReadPacket() == 1)
+                    {
+                        tecIsConnected = false;
+                        tectl.LogMessage("Connect Set", "first GET packet received fail");
+                        return;
+                    }
+                    tectl.LogMessage("Connect Set", "first GET packet received success");
                     tecIsConnected = value;
                 }
                 else

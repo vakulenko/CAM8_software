@@ -83,7 +83,7 @@ namespace ASCOM.cam8s_v07
         {
             tecComPort = new SerialPort(comPort, baudrate, System.IO.Ports.Parity.None, 8, System.IO.Ports.StopBits.One);
             rxBuf = new byte[rxBufferSize];
-            tectl = new TraceLogger("", "tec_cam8_v07");
+            tectl = new TraceLogger("", "tec_cam8s_v07");
             tectl.Enabled = traceEnabled;
             tectl.LogMessage("TECControl", "Initialization finished");
         }
@@ -130,6 +130,15 @@ namespace ASCOM.cam8s_v07
                         return;
                     }
                     tectl.LogMessage("Connect Set", "INFO packet received success");
+                    tecSendCommand(getCmd);
+                    Thread.Sleep(2000);
+                    if (tecReadPacket() == 1)
+                    {
+                        tecIsConnected = false;
+                        tectl.LogMessage("Connect Set", "first GET packet received fail");
+                        return;
+                    }
+                    tectl.LogMessage("Connect Set", "first GET packet received success");
                     tecIsConnected = value;
                 }
                 else
