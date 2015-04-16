@@ -726,7 +726,8 @@ end;
 //Get camera state, return int result
 function cameraIsError : WordBool; stdcall; export;
 begin
-  Result := errorReadFlag;
+  if (errorWriteFlag) then Result :=true
+  else Result := errorReadFlag;
 end;
 
 exports cameraConnect;
