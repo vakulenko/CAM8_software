@@ -770,6 +770,7 @@ namespace ASCOM.cam8_v07
         {
             get
             {
+                tl.LogMessage("CameraState Get", "Call cameraGetError from cam8ll07.dll");
                 if (cameraError != cameraIsError()) settingsForm.cameraError = cameraError = cameraIsError();                                                          
                 tl.LogMessage("CameraState Get", "Call cameraGetCameraState from cam8ll07.dll");
                 switch ((short)cameraGetCameraState())

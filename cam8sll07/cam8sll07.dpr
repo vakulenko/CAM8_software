@@ -83,6 +83,9 @@ mXn,mdeltX:integer;
 zatv:byte;
 //event of successful ccd reading
 hev:TEvent;
+//error Flag
+errorReadFlag : boolean;
+errorWriteFlag : boolean;
 
 // Небольшое пояснение работы с FT2232LH.
 //Всегда используется такой прием:
@@ -167,7 +170,7 @@ begin
     dan[31]:=dan[31]+4;
     dan[32]:=dan[32]+4;
   end;
-  Write_USB_Device_Buffer(FT_CAM8B,@dan, kol);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@dan, kol);
 end;
 
 //Заполнение выходного буфера массивом для передачи байта val на выводы микросхемы HC595.
@@ -305,13 +308,20 @@ end;
 
 //собственно само чтение массива через порт ADBUS
 procedure posl.Execute;
-var x,y,x1:word;
+var x,y,x1,byteCnt:word;
+readFailed:boolean;
 begin
+  readFailed:=false;
   for y:= mYn to mYn+mdeltY-1 do
   begin
     if mbin = 1 then
     begin
-      Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
+      byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
+      if (byteCnt<>8*mdeltX) then
+      begin
+        readFailed:=true;
+        break;
+      end;
       for x:=0 to mdeltX - 1 do
       begin
         x1:=x+mXn;
@@ -322,7 +332,12 @@ begin
       end;
     end
     else begin
-      Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
+      byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
+      if (byteCnt<>2*mdeltX) then
+      begin
+        readFailed:=true;
+        break;
+      end;
       for x:=0 to mdeltX - 1 do
       begin
         x1:=x+mXn;
@@ -333,7 +348,15 @@ begin
       end;
     end;
   end;
-  hev.SetEvent;
+  if (readFailed) then
+  begin
+    errorReadFlag := true;
+    hev.SetEvent;
+    sleep(2000);
+    if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
+    if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8B,FT_PURGE_TX);
+  end
+  else hev.SetEvent;
 end;
 
 //создание потока с самоликвидацией
@@ -360,8 +383,8 @@ const dout : array[0..4] of byte = (portsecond,portsecond+8,portfirst+8,portfirs
 var x,y:integer;
 begin
   cameraState := cameraReading;
-  Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
-  Purge_USB_Device(FT_CAM8B,FT_PURGE_TX);
+  if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
+  if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8B,FT_PURGE_TX);
   adress:=0;
   if expoz > 52 then
   begin
@@ -385,12 +408,12 @@ begin
           HC595($cf);
   end;
   shift2;
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
   adress:=0;
   for y:=0 to dy-1+mYn do
     shift;
   clearline;
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
   adress:=0;
   comread;
   for y:=0 to mdeltY -1 do
@@ -481,7 +504,7 @@ begin
       FT_Out_Buffer[adress+1]:=dout[3];
       inc(adress,2);
     end;
-    Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+    if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
   end;
   hev.WaitFor(4000);
   imageReady := true;
@@ -495,7 +518,7 @@ begin
   adress:=0;
   //on +15V
   HC595($cf);
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
   readframe (mBin, 1000);
   canStopExposureNow := true;
 end;
@@ -506,7 +529,7 @@ begin
   KillTimer (0,Timer15V);
   adress:=0;
   HC595($4f);
-  Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+  if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
   canStopExposureNow := true;
 end;
 
@@ -514,7 +537,7 @@ end;
 procedure StopExposure;
 begin
   KillTimer (0,ExposureTimer);
-  Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
+  if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
   cameraState := cameraIdle;
   imageReady := true;
 end;
@@ -537,6 +560,7 @@ function cameraConnect () : WordBool; stdcall; export;
 var  FT_OP_flag : boolean;
 begin
   FT_OP_flag:=true;
+  errorWriteFlag:=false;
   if (FT_OP_flag) then
   begin
       if Open_USB_Device_By_Serial_Number(FT_CAM8A,'CAM8A') <> FT_OK then FT_OP_flag := false;
@@ -567,9 +591,10 @@ begin
     AD9822(3,34);
     adress:=0;
     HC595($cf);
-    Write_USB_Device_Buffer(FT_CAM8B,@FT_Out_Buffer,adress);
+    if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_Out_Buffer,adress);
   end;
   isConnected := FT_OP_flag;
+  errorReadFlag := false;
   cameraState := cameraIdle;
   if(FT_OP_flag=false) then cameraState := cameraError;
   Result := isConnected;
@@ -595,6 +620,7 @@ end;
 function cameraStartExposure (Bin,StartX,StartY,NumX,NumY : integer; Duration : double; light : WordBool) : WordBool; stdcall; export;
 begin
   canStopExposureNow := false;
+  errorReadFlag := false;
   mBin := Bin;
   if light then zatv:=0
   else zatv:=1;
@@ -622,7 +648,7 @@ begin
   begin
     adress:=0;
     shift3;
-    Write_USB_Device_Buffer(FT_CAM8B,@FT_OUT_Buffer,adress);
+    if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
     ExposureTimer := settimer (0,0,round(Duration*1000-52),@ExposureTimerTick);
     Timer15V := settimer (0,0,1000,@Timer15VTick);
   end
@@ -648,7 +674,8 @@ end;
 //Get camera state, return int result
 function cameraGetCameraState : integer; stdcall; export;
 begin
-  Result := cameraState;
+  if (not errorWriteFlag) then Result := cameraState
+  else Result := cameraError;
 end;
 
 //Check ImageReady flag, is image ready for transfer - transfer image to driver and return bool ImageReady flag
@@ -682,6 +709,13 @@ begin
   Result :=true;
 end;
 
+//Get camera error state, return bool result
+function cameraIsError : WordBool; stdcall; export;
+begin
+  if (errorWriteFlag) then Result :=true
+  else Result := errorReadFlag;
+end;
+
 exports cameraConnect;
 exports cameraDisconnect;
 exports cameraIsConnected;
@@ -692,6 +726,7 @@ exports cameraGetImageReady;
 exports cameraGetImage;
 exports cameraSetGain;
 exports cameraSetOffset;
+exports cameraIsError;
 
 begin
   hev := TEvent.Create(nil, false, false, '');

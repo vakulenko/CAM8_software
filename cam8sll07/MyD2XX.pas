@@ -100,6 +100,7 @@ Function Open_USB_Device_By_Device_Location(Location:DWord) : FT_Result;
 Function Close_USB_Device(var FT: DWord) : FT_Result;
 Function Read_USB_Device_Buffer(var FT:DWord;Read_Count:Integer) : Integer;
 Function Write_USB_Device_Buffer(var FT:DWord; p:pointer; Write_Count:Integer) : Integer;
+Function Write_USB_Device_Buffer_wErr(var FT:DWord; p:pointer; Write_Count:Integer) : Boolean;
 Function Reset_USB_Device : FT_Result;
 Function Set_USB_Device_BaudRate : FT_Result;
 Function Set_USB_Device_BaudRate_Divisor(Divisor:Dword) : FT_Result;
@@ -523,6 +524,19 @@ If FT_IO_Status <> FT_OK then FT_Error_Report('FT_Write',FT_IO_Status);
 Result := Write_Result;
 End;
 
+function Write_USB_Device_Buffer_wErr(var FT:DWord; p:pointer; Write_Count : Integer ) : Boolean;
+// Writes Write_Count Bytes from FT_Out_Buffer to the USB device
+// Function returns the number of bytes actually sent
+// In this example, Write_Count should be 32k bytes max
+Var Write_Result : Integer;
+    Res : boolean;
+Begin
+FT_IO_Status := FT_Write(FT,p,Write_Count,@Write_Result);
+If FT_IO_Status <> FT_OK then FT_Error_Report('FT_Write',FT_IO_Status);
+if (Write_Result <> Write_Count) then Res:=true
+else Res:=false;
+Result := Res;
+End;
 
 Function Reset_USB_Device : FT_Result;
 Begin

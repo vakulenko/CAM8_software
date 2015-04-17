@@ -398,6 +398,8 @@ namespace ASCOM.cam8s_v07
         static extern bool cameraSetGain(int val);
         [DllImport("cam8sll07.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraSetOffset(int val);
+        [DllImport("cam8sll07.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern bool cameraIsError();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="cam8s_v07"/> class.
@@ -633,6 +635,8 @@ namespace ASCOM.cam8s_v07
         private bool cameraImageReady = false;
         private Array cameraImageArray;
 
+        private bool cameraError = false;
+
         public void AbortExposure()
         {
             tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from cam8sll07.dll");
@@ -766,6 +770,8 @@ namespace ASCOM.cam8s_v07
         {
             get
             {
+                tl.LogMessage("CameraState Get", "Call cameraGetError from cam8sll07.dll");
+                if (cameraError != cameraIsError()) settingsForm.cameraError = cameraError = cameraIsError(); 
                 tl.LogMessage("CameraState Get", "Call cameraGetCameraState from cam8sll07.dll");
                 switch ((short)cameraGetCameraState())
                 {
@@ -1095,26 +1101,37 @@ namespace ASCOM.cam8s_v07
                     //Create image array
                     cameraImageArray = Array.CreateInstance(typeof(int), cameraNumX * cameraNumY);
                     int i, j, k = 0;
-
-                    if (cameraBinX == 1)
+                    if (cameraError)
                     {
                         for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
                             for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
                             {
-                                pixelpoint = (int*)(zeropixelpoint + (i * ccdHeight + j));
-                                cameraImageArray.SetValue(*pixelpoint, k);
+                                cameraImageArray.SetValue(0, k);
                                 k++;
                             }
                     }
                     else
                     {
-                        for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
-                            for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
-                            {
-                                pixelpoint = (int*)(zeropixelpoint + (2 * i * ccdHeight + j * 2));
-                                cameraImageArray.SetValue(*pixelpoint, k);
-                                k++;
-                            }
+                        if (cameraBinX == 1)
+                        {
+                            for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
+                                for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
+                                {
+                                    pixelpoint = (int*)(zeropixelpoint + (i * ccdHeight + j));
+                                    cameraImageArray.SetValue(*pixelpoint, k);
+                                    k++;
+                                }
+                        }
+                        else
+                        {
+                            for (j = cameraStartY; j < (cameraStartY + cameraNumY); j++)
+                                for (i = cameraStartX; i < (cameraStartX + cameraNumX); i++)
+                                {
+                                    pixelpoint = (int*)(zeropixelpoint + (2 * i * ccdHeight + j * 2));
+                                    cameraImageArray.SetValue(*pixelpoint, k);
+                                    k++;
+                                }
+                        }
                     }
                 }
                 return cameraImageArray;

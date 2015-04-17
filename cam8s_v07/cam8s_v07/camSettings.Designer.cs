@@ -38,6 +38,7 @@
             this.gainNumUpDown = new System.Windows.Forms.NumericUpDown();
             this.offsetNumUpDown = new System.Windows.Forms.NumericUpDown();
             this.tecStatusLabel = new System.Windows.Forms.Label();
+            this.cameraStatusLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.gainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).BeginInit();
@@ -150,11 +151,21 @@
             this.tecStatusLabel.TabIndex = 44;
             this.tecStatusLabel.Text = "TEC status:";
             // 
+            // cameraStatusLabel
+            // 
+            this.cameraStatusLabel.AutoSize = true;
+            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 152);
+            this.cameraStatusLabel.Name = "cameraStatusLabel";
+            this.cameraStatusLabel.Size = new System.Drawing.Size(132, 13);
+            this.cameraStatusLabel.TabIndex = 45;
+            this.cameraStatusLabel.Text = "Camera status: operational";
+            // 
             // camSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(230, 160);
+            this.ClientSize = new System.Drawing.Size(230, 180);
+            this.Controls.Add(this.cameraStatusLabel);
             this.Controls.Add(this.tecStatusLabel);
             this.Controls.Add(this.offsetNumUpDown);
             this.Controls.Add(this.gainNumUpDown);
@@ -165,8 +176,8 @@
             this.Controls.Add(this.minMaxGainLabel);
             this.Controls.Add(this.offsetLabel);
             this.Controls.Add(this.gainLabel);
-            this.MaximumSize = new System.Drawing.Size(238, 189);
-            this.MinimumSize = new System.Drawing.Size(238, 189);
+            this.MaximumSize = new System.Drawing.Size(238, 209);
+            this.MinimumSize = new System.Drawing.Size(238, 209);
             this.Name = "camSettings";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
@@ -193,5 +204,6 @@
         private System.Windows.Forms.NumericUpDown gainNumUpDown;
         private System.Windows.Forms.NumericUpDown offsetNumUpDown;
         private System.Windows.Forms.Label tecStatusLabel;
+        private System.Windows.Forms.Label cameraStatusLabel;
     }
 }

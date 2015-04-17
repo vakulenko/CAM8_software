@@ -83,6 +83,23 @@ namespace ASCOM.cam8s_v07
             }
         }
 
+        public bool cameraError
+        {
+            set
+            {
+                if (value)
+                {
+                    this.BackColor = System.Drawing.Color.Yellow;
+                    this.cameraStatusLabel.Text = "Camera status: error";
+                }
+                else
+                {
+                    this.BackColor = SystemColors.Control;
+                    this.cameraStatusLabel.Text = "Camera status: operational";
+                }
+            }
+        }
+
         private void GainTrackBar_Scroll(object sender, EventArgs e)
         {
             gainNumUpDown.Value = gainTrackBar.Value;
