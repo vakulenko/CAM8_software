@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------
 // ASCOM Camera driver low-level interaction library for cam8s_v0.7
 // Edit Log:
 // Date Who Vers Description
@@ -6,7 +6,7 @@
 // 24-sep-2014 VSS 0.5 Initial release (code obtained from grim)
 // 27-nov-2014 VSS 0.55 Only version was changed
 // 08-mar-2015 VSS 0.6 Some code refactoring, add Stop exposure
-// 10-apr-2015 VSS 0.7 Code update from Grim
+// 10-apr-2015 VSS 0.7 Code update from Grim, error handling FT_Read, FT_Write
 // --------------------------------------------------------------------------------
 
 library cam8sll07;
