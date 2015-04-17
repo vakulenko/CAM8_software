@@ -11,7 +11,7 @@
 // 10-oct-2014  VSS 0.51    Fixed with cleaning FT2232H buffer in readframe function
 // 27-nov-2014  VSS 0.55    Only version number changes
 // 20-feb-2015  VSS 0.6     Some code mini refactoring
-// 10-apr-2015  VSS 0.7     Code update from Grim, error handling FT_Read, FT_Write
+// 10-apr-2015  VSS 0.7     Error handling FT_Read, FT_Write
 // --------------------------------------------------------------------------------
 
 library cam8ll07;
@@ -86,8 +86,6 @@ bufim:CameraImageType;
 mYn,mdeltY:integer;
 //начало чтения и количество по столбцам
 mXn,mdeltX:integer;
-//event of successful ccd reading
-hev:TEvent;
 //error Flag
 errorReadFlag : boolean;
 errorWriteFlag : boolean;
@@ -355,12 +353,9 @@ begin
   if (readFailed) then
   begin
     errorReadFlag := true;
-    hev.SetEvent;
-    sleep(2000);
     if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8A,FT_PURGE_RX);
     if (not errorWriteFlag) then Purge_USB_Device(FT_CAM8B,FT_PURGE_TX);
-  end
-  else hev.SetEvent;
+  end;
   imageReady := true;
   cameraState:=cameraIdle;
 end;
@@ -526,7 +521,6 @@ begin
   HC595($f9);
   if (not errorWriteFlag) then errorWriteFlag := Write_USB_Device_Buffer_wErr(FT_CAM8B,@FT_OUT_Buffer,adress);
   readframe (mBin, 1000);
-  hev.WaitFor(4000);
   canStopExposureNow := true;
 end;
 
@@ -586,7 +580,7 @@ begin
       //максимальное быстродействие
       Set_USB_Device_LatencyTimer(FT_CAM8B,2);
       Set_USB_Device_LatencyTimer(FT_CAM8A,2);
-      Set_USB_Device_TimeOuts(FT_CAM8A,4000,4000);
+      Set_USB_Device_TimeOuts(FT_CAM8A,12000,12000);
       Purge_USB_Device(FT_CAM8A,FT_PURGE_RX or FT_PURGE_TX);
       Purge_USB_Device(FT_CAM8B,FT_PURGE_RX or FT_PURGE_TX);
       //режим AD9822 - канал G,2 вольта опорность, CDS режим
@@ -666,7 +660,6 @@ begin
   else
     begin
       readframe (mBin,round(Duration*1000));
-      hev.WaitFor(4000);
     end;
   Result := true;
 end;
@@ -724,10 +717,13 @@ begin
 end;
 
 //Get camera error state, return bool result
-function cameraIsError : WordBool; stdcall; export;
+function cameraGetError : integer; stdcall; export;
+var res : integer;
 begin
-  if (errorWriteFlag) then Result :=true
-  else Result := errorReadFlag;
+  res:=0;
+  if (errorWriteFlag) then res :=res+2;
+  if (errorReadFlag) then res :=res+1;
+  Result:=res;
 end;
 
 exports cameraConnect;
@@ -740,9 +736,9 @@ exports cameraStopExposure;
 exports cameraGetCameraState;
 exports cameraGetImageReady;
 exports cameraGetImage;
-exports cameraIsError;
+exports cameraGetError;
 
 begin
-  hev := TEvent.Create(nil, false, false, '');
+
 end.
 
