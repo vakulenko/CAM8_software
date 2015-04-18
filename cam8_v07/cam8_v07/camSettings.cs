@@ -89,24 +89,25 @@ namespace ASCOM.cam8_v07
             {
                 switch (value)
                 {
-                    case 0: 
+                    case 0:
                         {
                             this.BackColor = SystemColors.Control;
                             this.cameraStatusLabel.Text = "Camera status: operational";
                             break;
                         };
-                    case 1: 
+                    case 1:
                         {
                             this.BackColor = System.Drawing.Color.Yellow;
                             this.cameraStatusLabel.Text = "Camera status: warning";
                             break;
                         };
-                    case 2: case 3 : 
+                    case 2: case 3:
                         {
                             this.BackColor = System.Drawing.Color.Yellow;
                             this.cameraStatusLabel.Text = "Camera status: failed";
                             break;
                         };
+                    default: { break; };
                 }
             }
         }

@@ -83,19 +83,31 @@ namespace ASCOM.cam8s_v07
             }
         }
 
-        public bool cameraError
+        public int cameraError
         {
             set
             {
-                if (value)
+                switch (value)
                 {
-                    this.BackColor = System.Drawing.Color.Yellow;
-                    this.cameraStatusLabel.Text = "Camera status: error";
-                }
-                else
-                {
-                    this.BackColor = SystemColors.Control;
-                    this.cameraStatusLabel.Text = "Camera status: operational";
+                    case 0: 
+                        {
+                            this.BackColor = SystemColors.Control;
+                            this.cameraStatusLabel.Text = "Camera status: operational";
+                            break;
+                        };
+                    case 1: 
+                        {
+                            this.BackColor = System.Drawing.Color.Yellow;
+                            this.cameraStatusLabel.Text = "Camera status: warning";
+                            break;
+                        };
+                    case 2: case 3: 
+                        {
+                            this.BackColor = System.Drawing.Color.Yellow;
+                            this.cameraStatusLabel.Text = "Camera status: failed";
+                            break;
+                        };
+                    default: { break; };
                 }
             }
         }
