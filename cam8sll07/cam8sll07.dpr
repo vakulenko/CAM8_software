@@ -314,7 +314,7 @@ begin
   begin
     if mbin = 1 then
     begin
-      byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
+      if (not errorWriteFlag) then byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,8*mdeltX);
       if (byteCnt<>8*mdeltX) then
       begin
         readFailed:=true;
@@ -330,7 +330,7 @@ begin
       end;
     end
     else begin
-      byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
+      if (not errorWriteFlag) then byteCnt:=Read_USB_Device_Buffer(FT_CAM8A,2*mdeltX);
       if (byteCnt<>2*mdeltX) then
       begin
         readFailed:=true;

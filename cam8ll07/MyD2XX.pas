@@ -621,7 +621,7 @@ End;
 Function Purge_USB_Device(var FT: DWord;mask:DWord) : FT_Result;
 Begin
 Result :=  FT_Purge(FT,mask);
-If Result <> FT_OK then FT_Error_Report('FT_Purge RX',Result);
+If Result <> FT_OK then FT_Error_Report('FT_Purge',Result);
 End;
 
 Function Purge_USB_Device_Out(var FT: DWord) : FT_Result;
