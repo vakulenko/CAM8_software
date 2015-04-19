@@ -310,6 +310,7 @@ var x,y,x1,byteCnt:word;
 readFailed:boolean;
 begin
   readFailed:=false;
+  byteCnt:=0;
   for y:= mYn to mYn+mdeltY-1 do
   begin
     if mbin = 1 then
