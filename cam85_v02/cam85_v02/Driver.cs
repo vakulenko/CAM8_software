@@ -334,18 +334,21 @@ namespace ASCOM.cam85_v02
         internal static string onTopStateProfileName = "onTop";
         internal static string coolerEnabledStateProfileName = "coolerEnabled";
         internal static string coolerComPortStateProfileName = "coolerComPort";
+        internal static string baudrateAdjustStateProfileName = "speedAdjust";
         internal static string traceStateDefault = "false";
         internal static string gainStateDefault = "34";
         internal static string offsetStateDefault = "-7";
         internal static string onTopStateDefault = "true";
         internal static string coolerEnabledStateDefault = "false";
         internal static string coolerComPortStateDefault = "COM1";
+        internal static string baudrateAdjustStateDefault = "200";
         internal static bool traceState;
         internal static short gainState;
         internal static short offsetState;
         internal static bool onTopState;
         internal static bool coolerEnabledState;
         internal static string coolerComPortState;
+        internal static int baudrateAdjustState;
 
         /// <summary>
         /// Form, handle gain/offset settings
@@ -397,6 +400,8 @@ namespace ASCOM.cam85_v02
         static extern bool cameraSetOffset(int val);
         [DllImport("cam85ll02.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int cameraGetError();
+        [DllImport("cam85ll02.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        static extern bool cameraSetBaudrate(int val);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="cam85_v02"/> class.
@@ -422,6 +427,7 @@ namespace ASCOM.cam85_v02
             settingsForm.offset = offsetState;
             settingsForm.onTop = onTopState;
             if (!coolerEnabledState) settingsForm.tecStatus = "disabled";
+            settingsForm.baudrateAdjust = baudrateAdjustState;
             tec = new TECControl(coolerComPortState, traceState);
             tl.LogMessage("Camera", "Completed initialisation");
         }
@@ -1422,12 +1428,19 @@ namespace ASCOM.cam85_v02
                 tl.LogMessage("StartExposure", "Cant set offset to cam85");
                 throw new ASCOM.InvalidOperationException("Cant set offset to cam85");
             }
+            tl.LogMessage("StartExposure", "Call cameraSetBaudrate from cam85ll02.dll args: baudrateAdjust=" + settingsForm.baudrateAdjust.ToString());
+            if (cameraSetBaudrate(settingsForm.baudrateAdjust) == false)
+            {
+                tl.LogMessage("StartExposure", "Cant set baudrate to cam85");
+                throw new ASCOM.InvalidOperationException("Cant set baudrate to cam85");
+            }
             //Save parameters
             cameraLastExposureDuration = Duration;
             exposureStart = DateTime.Now;
             gainState = settingsForm.gain;
             offsetState = settingsForm.offset;
             onTopState = settingsForm.onTop;
+            baudrateAdjustState = settingsForm.baudrateAdjust;
             //start exposure
             tl.LogMessage("StartExposure", "Call cameraStartExposure from cam85ll02.dll, args: ");
             tl.LogMessage("StartExposure", " cameraBinX=" + cameraBinX.ToString() +
@@ -1609,6 +1622,7 @@ namespace ASCOM.cam85_v02
                 onTopState = Convert.ToBoolean(driverProfile.GetValue(driverID, onTopStateProfileName, string.Empty, onTopStateDefault));
                 coolerEnabledState = Convert.ToBoolean(driverProfile.GetValue(driverID, coolerEnabledStateProfileName, string.Empty, coolerEnabledStateDefault));
                 coolerComPortState = driverProfile.GetValue(driverID, coolerComPortStateProfileName, string.Empty, coolerComPortStateDefault);
+                baudrateAdjustState = Convert.ToInt16(driverProfile.GetValue(driverID, baudrateAdjustStateProfileName, string.Empty, baudrateAdjustStateDefault));
             }
         }
 
@@ -1626,6 +1640,7 @@ namespace ASCOM.cam85_v02
                 driverProfile.WriteValue(driverID, onTopStateProfileName, onTopState.ToString());
                 driverProfile.WriteValue(driverID, coolerEnabledStateProfileName, coolerEnabledState.ToString());
                 driverProfile.WriteValue(driverID, coolerComPortStateProfileName, coolerComPortState.ToString());
+                driverProfile.WriteValue(driverID, baudrateAdjustStateProfileName, baudrateAdjustState.ToString());
             }
         }
 

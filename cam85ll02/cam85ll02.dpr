@@ -1,10 +1,10 @@
 // --------------------------------------------------------------------------------
-// ASCOM Camera driver low-level interaction library for cam85_v0.1
+// ASCOM Camera driver low-level interaction library for cam85_v0.2
 // Edit Log:
 // Date Who Vers Description
 // ----------- --- ----- ---------------------------------------------------------
 // 24-sep-2015 VSS 0.1 Initial release (code obtained from grim)
-// 05-nov-2015 VSS 0.2 Only version changes
+// 10-nov-2015 VSS 0.2 User can control FT2232 baudrate.
 // --------------------------------------------------------------------------------
 
 library cam85ll02;
@@ -30,8 +30,6 @@ yccd = 1000;
 dx = 3044-2*xccd;
 dx2 = 1586-xccd;
 dy = 512-(yccd div 2);
-spusb = 1600000;
-ms1 = spusb div 8000;
 
 //camera state consts
 cameraIdle = 0;
@@ -83,6 +81,9 @@ zatv:byte;
 //error Flag
 errorReadFlag : boolean;
 errorWriteFlag : boolean;
+//speed
+spusb : longint;
+ms1 : longint;
 
 // ????????? ????????? ?????? ? FT2232LH.
 //?????? ???????????? ????? ?????:
@@ -532,7 +533,9 @@ begin
   begin
       // BitMode
       if Set_USB_Device_BitMode(FT_CAM8B,$ff, $01)  <> FT_OK then FT_OP_flag := false;
-      FT_Current_Baud:=spusb;      
+      spusb := 1600000;
+      ms1 := spusb div 8000;
+      FT_Current_Baud := spusb;      
   end;
   if (FT_OP_flag) then
   begin
@@ -656,6 +659,7 @@ end;
 //Set camera gain, return bool result
 function cameraSetGain (val : integer) : WordBool; stdcall; export;
 begin
+
   AD9822(3,val);
   Result :=true;
 end;
@@ -680,6 +684,21 @@ begin
   Result:=res;
 end;
 
+//Set camera baudrate, return bool result
+function cameraSetBaudrate(val : integer) : WordBool; stdcall; export;
+begin
+  //setup FT2232 baud rate
+  if (val>=120) and (val<=240) then
+  begin
+    spusb := val*10000;
+    ms1 := spusb div 8000;
+    FT_Current_Baud := spusb;
+    Set_USB_Device_BaudRate(FT_CAM8B); 
+    Result := true;
+  end
+  else Result := false;
+end;
+
 exports cameraConnect;
 exports cameraDisconnect;
 exports cameraIsConnected;
@@ -691,6 +710,7 @@ exports cameraGetImage;
 exports cameraSetGain;
 exports cameraSetOffset;
 exports cameraGetError;
+exports cameraSetBaudrate;
 
 begin
 

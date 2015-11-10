@@ -15,6 +15,8 @@ namespace ASCOM.cam85_v02
         const short maxGain = 63;
         const short minOffset = -127;
         const short maxOffset = 127;
+        const int minBaudrateAdjust = 120;
+        const int maxBaudrateAdjust = 240;
 
         const short CameraStatusOperational = 0;
         const short CameraStatusWarning = 1;
@@ -27,6 +29,7 @@ namespace ASCOM.cam85_v02
 
         private short pGain = 0;
         private short pOffset = 0;
+        private int pBaudrateAdjust = 200;
 
         public short gain
         {
@@ -111,6 +114,24 @@ namespace ASCOM.cam85_v02
             }
         }
 
+        public int baudrateAdjust
+        {
+            get
+            {
+                return pBaudrateAdjust;
+            }
+            set
+            {
+                if ((value >= minBaudrateAdjust) && (value <= maxBaudrateAdjust))
+                {
+                    pBaudrateAdjust = value;
+                    this.baudrateAdjustNumUpDown.Value = pBaudrateAdjust;
+                    this.baudrateAdjustTrackBar.Value = pBaudrateAdjust;
+                }
+                else throw new ASCOM.InvalidValueException("cam_settings, baudrateAdjust");
+            }
+        }
+
         private void GainTrackBar_Scroll(object sender, EventArgs e)
         {
             gainNumUpDown.Value = gainTrackBar.Value;
@@ -119,6 +140,11 @@ namespace ASCOM.cam85_v02
         private void OffsetTrackBar_Scroll(object sender, EventArgs e)
         {
             offsetNumUpDown.Value = offsetTrackBar.Value;
+        }
+
+        private void baudrateAdjustTrackBar_Scroll(object sender, EventArgs e)
+        {
+            baudrateAdjustNumUpDown.Value = baudrateAdjustTrackBar.Value;
         }
 
         private void OnTopCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -135,6 +161,11 @@ namespace ASCOM.cam85_v02
         private void offsetNumUpDown_ValueChanged(object sender, EventArgs e)
         {
             offsetTrackBar.Value = offset = (short)offsetNumUpDown.Value;
+        }
+
+        private void baudrateAdjustNumUpDown_ValueChanged(object sender, EventArgs e)
+        {
+            baudrateAdjustTrackBar.Value = baudrateAdjust = (int) baudrateAdjustNumUpDown.Value;
         }
 
         private void camSettings_FormClosing(object sender, FormClosingEventArgs e)

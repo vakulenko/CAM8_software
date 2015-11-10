@@ -39,10 +39,16 @@
             this.offsetNumUpDown = new System.Windows.Forms.NumericUpDown();
             this.tecStatusLabel = new System.Windows.Forms.Label();
             this.cameraStatusLabel = new System.Windows.Forms.Label();
+            this.baudrateAdjustNumUpDown = new System.Windows.Forms.NumericUpDown();
+            this.baudrateAdjustTrackBar = new System.Windows.Forms.TrackBar();
+            this.minMaxBaudrateAdjLabel = new System.Windows.Forms.Label();
+            this.baudrateAdjLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.gainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetNumUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustNumUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustTrackBar)).BeginInit();
             this.SuspendLayout();
             // 
             // gainTrackBar
@@ -50,7 +56,7 @@
             this.gainTrackBar.Location = new System.Drawing.Point(6, 25);
             this.gainTrackBar.Maximum = 63;
             this.gainTrackBar.Name = "gainTrackBar";
-            this.gainTrackBar.Size = new System.Drawing.Size(219, 37);
+            this.gainTrackBar.Size = new System.Drawing.Size(219, 45);
             this.gainTrackBar.TabIndex = 36;
             this.gainTrackBar.Scroll += new System.EventHandler(this.GainTrackBar_Scroll);
             // 
@@ -60,7 +66,7 @@
             this.offsetTrackBar.Maximum = 127;
             this.offsetTrackBar.Minimum = -127;
             this.offsetTrackBar.Name = "offsetTrackBar";
-            this.offsetTrackBar.Size = new System.Drawing.Size(219, 37);
+            this.offsetTrackBar.Size = new System.Drawing.Size(219, 45);
             this.offsetTrackBar.TabIndex = 35;
             this.offsetTrackBar.Scroll += new System.EventHandler(this.OffsetTrackBar_Scroll);
             // 
@@ -145,7 +151,7 @@
             // tecStatusLabel
             // 
             this.tecStatusLabel.AutoSize = true;
-            this.tecStatusLabel.Location = new System.Drawing.Point(6, 131);
+            this.tecStatusLabel.Location = new System.Drawing.Point(6, 200);
             this.tecStatusLabel.Name = "tecStatusLabel";
             this.tecStatusLabel.Size = new System.Drawing.Size(62, 13);
             this.tecStatusLabel.TabIndex = 44;
@@ -154,17 +160,73 @@
             // cameraStatusLabel
             // 
             this.cameraStatusLabel.AutoSize = true;
-            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 152);
+            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 221);
             this.cameraStatusLabel.Name = "cameraStatusLabel";
             this.cameraStatusLabel.Size = new System.Drawing.Size(132, 13);
             this.cameraStatusLabel.TabIndex = 45;
             this.cameraStatusLabel.Text = "Camera status: operational";
             // 
+            // baudrateAdjustNumUpDown
+            // 
+            this.baudrateAdjustNumUpDown.Location = new System.Drawing.Point(130, 136);
+            this.baudrateAdjustNumUpDown.Maximum = new decimal(new int[] {
+            240,
+            0,
+            0,
+            0});
+            this.baudrateAdjustNumUpDown.Minimum = new decimal(new int[] {
+            120,
+            0,
+            0,
+            0});
+            this.baudrateAdjustNumUpDown.Name = "baudrateAdjustNumUpDown";
+            this.baudrateAdjustNumUpDown.Size = new System.Drawing.Size(51, 20);
+            this.baudrateAdjustNumUpDown.TabIndex = 49;
+            this.baudrateAdjustNumUpDown.Value = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
+            this.baudrateAdjustNumUpDown.ValueChanged += new System.EventHandler(this.baudrateAdjustNumUpDown_ValueChanged);
+            // 
+            // baudrateAdjustTrackBar
+            // 
+            this.baudrateAdjustTrackBar.Location = new System.Drawing.Point(6, 157);
+            this.baudrateAdjustTrackBar.Maximum = 240;
+            this.baudrateAdjustTrackBar.Minimum = 120;
+            this.baudrateAdjustTrackBar.Name = "baudrateAdjustTrackBar";
+            this.baudrateAdjustTrackBar.Size = new System.Drawing.Size(219, 45);
+            this.baudrateAdjustTrackBar.TabIndex = 48;
+            this.baudrateAdjustTrackBar.Value = 200;
+            this.baudrateAdjustTrackBar.Scroll += new System.EventHandler(this.baudrateAdjustTrackBar_Scroll);
+            // 
+            // minMaxBaudrateAdjLabel
+            // 
+            this.minMaxBaudrateAdjLabel.AutoSize = true;
+            this.minMaxBaudrateAdjLabel.Location = new System.Drawing.Point(74, 139);
+            this.minMaxBaudrateAdjLabel.Name = "minMaxBaudrateAdjLabel";
+            this.minMaxBaudrateAdjLabel.Size = new System.Drawing.Size(49, 13);
+            this.minMaxBaudrateAdjLabel.TabIndex = 47;
+            this.minMaxBaudrateAdjLabel.Text = "120..240";
+            // 
+            // baudrateAdjLabel
+            // 
+            this.baudrateAdjLabel.AutoSize = true;
+            this.baudrateAdjLabel.Location = new System.Drawing.Point(6, 139);
+            this.baudrateAdjLabel.Name = "baudrateAdjLabel";
+            this.baudrateAdjLabel.Size = new System.Drawing.Size(70, 13);
+            this.baudrateAdjLabel.TabIndex = 46;
+            this.baudrateAdjLabel.Text = "Baudrate adj.";
+            // 
             // camSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(230, 180);
+            this.ClientSize = new System.Drawing.Size(230, 239);
+            this.Controls.Add(this.baudrateAdjustNumUpDown);
+            this.Controls.Add(this.baudrateAdjustTrackBar);
+            this.Controls.Add(this.minMaxBaudrateAdjLabel);
+            this.Controls.Add(this.baudrateAdjLabel);
             this.Controls.Add(this.cameraStatusLabel);
             this.Controls.Add(this.tecStatusLabel);
             this.Controls.Add(this.offsetNumUpDown);
@@ -176,8 +238,7 @@
             this.Controls.Add(this.minMaxGainLabel);
             this.Controls.Add(this.offsetLabel);
             this.Controls.Add(this.gainLabel);
-            this.MaximumSize = new System.Drawing.Size(238, 209);
-            this.MinimumSize = new System.Drawing.Size(238, 209);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.Name = "camSettings";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
@@ -187,6 +248,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.offsetTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetNumUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustNumUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustTrackBar)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -205,5 +268,9 @@
         private System.Windows.Forms.NumericUpDown offsetNumUpDown;
         private System.Windows.Forms.Label tecStatusLabel;
         private System.Windows.Forms.Label cameraStatusLabel;
+        private System.Windows.Forms.NumericUpDown baudrateAdjustNumUpDown;
+        private System.Windows.Forms.TrackBar baudrateAdjustTrackBar;
+        private System.Windows.Forms.Label minMaxBaudrateAdjLabel;
+        private System.Windows.Forms.Label baudrateAdjLabel;
     }
 }
