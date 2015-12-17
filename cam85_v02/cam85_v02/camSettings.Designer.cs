@@ -168,6 +168,11 @@
             // 
             // baudrateAdjustNumUpDown
             // 
+            this.baudrateAdjustNumUpDown.Increment = new decimal(new int[] {
+            40,
+            0,
+            0,
+            0});
             this.baudrateAdjustNumUpDown.Location = new System.Drawing.Point(130, 136);
             this.baudrateAdjustNumUpDown.Maximum = new decimal(new int[] {
             240,
@@ -193,10 +198,11 @@
             // 
             this.baudrateAdjustTrackBar.Location = new System.Drawing.Point(6, 157);
             this.baudrateAdjustTrackBar.Maximum = 240;
-            this.baudrateAdjustTrackBar.Minimum = 120;
+            this.baudrateAdjustTrackBar.Minimum = 80;
             this.baudrateAdjustTrackBar.Name = "baudrateAdjustTrackBar";
             this.baudrateAdjustTrackBar.Size = new System.Drawing.Size(219, 45);
             this.baudrateAdjustTrackBar.TabIndex = 48;
+            this.baudrateAdjustTrackBar.TickFrequency = 40;
             this.baudrateAdjustTrackBar.Value = 200;
             this.baudrateAdjustTrackBar.Scroll += new System.EventHandler(this.baudrateAdjustTrackBar_Scroll);
             // 
@@ -205,9 +211,9 @@
             this.minMaxBaudrateAdjLabel.AutoSize = true;
             this.minMaxBaudrateAdjLabel.Location = new System.Drawing.Point(74, 139);
             this.minMaxBaudrateAdjLabel.Name = "minMaxBaudrateAdjLabel";
-            this.minMaxBaudrateAdjLabel.Size = new System.Drawing.Size(49, 13);
+            this.minMaxBaudrateAdjLabel.Size = new System.Drawing.Size(43, 13);
             this.minMaxBaudrateAdjLabel.TabIndex = 47;
-            this.minMaxBaudrateAdjLabel.Text = "120..240";
+            this.minMaxBaudrateAdjLabel.Text = "80..240";
             // 
             // baudrateAdjLabel
             // 

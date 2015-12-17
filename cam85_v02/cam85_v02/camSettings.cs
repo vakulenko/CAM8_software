@@ -15,7 +15,7 @@ namespace ASCOM.cam85_v02
         const short maxGain = 63;
         const short minOffset = -127;
         const short maxOffset = 127;
-        const int minBaudrateAdjust = 120;
+        const int minBaudrateAdjust = 80;
         const int maxBaudrateAdjust = 240;
 
         const short CameraStatusOperational = 0;
