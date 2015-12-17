@@ -40,7 +40,6 @@
             this.tecStatusLabel = new System.Windows.Forms.Label();
             this.cameraStatusLabel = new System.Windows.Forms.Label();
             this.baudrateAdjustNumUpDown = new System.Windows.Forms.NumericUpDown();
-            this.baudrateAdjustTrackBar = new System.Windows.Forms.TrackBar();
             this.minMaxBaudrateAdjLabel = new System.Windows.Forms.Label();
             this.baudrateAdjLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.gainTrackBar)).BeginInit();
@@ -48,7 +47,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetNumUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustNumUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustTrackBar)).BeginInit();
             this.SuspendLayout();
             // 
             // gainTrackBar
@@ -151,7 +149,7 @@
             // tecStatusLabel
             // 
             this.tecStatusLabel.AutoSize = true;
-            this.tecStatusLabel.Location = new System.Drawing.Point(6, 200);
+            this.tecStatusLabel.Location = new System.Drawing.Point(6, 159);
             this.tecStatusLabel.Name = "tecStatusLabel";
             this.tecStatusLabel.Size = new System.Drawing.Size(62, 13);
             this.tecStatusLabel.TabIndex = 44;
@@ -160,7 +158,7 @@
             // cameraStatusLabel
             // 
             this.cameraStatusLabel.AutoSize = true;
-            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 221);
+            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 180);
             this.cameraStatusLabel.Name = "cameraStatusLabel";
             this.cameraStatusLabel.Size = new System.Drawing.Size(132, 13);
             this.cameraStatusLabel.TabIndex = 45;
@@ -180,7 +178,7 @@
             0,
             0});
             this.baudrateAdjustNumUpDown.Minimum = new decimal(new int[] {
-            120,
+            80,
             0,
             0,
             0});
@@ -193,18 +191,6 @@
             0,
             0});
             this.baudrateAdjustNumUpDown.ValueChanged += new System.EventHandler(this.baudrateAdjustNumUpDown_ValueChanged);
-            // 
-            // baudrateAdjustTrackBar
-            // 
-            this.baudrateAdjustTrackBar.Location = new System.Drawing.Point(6, 157);
-            this.baudrateAdjustTrackBar.Maximum = 240;
-            this.baudrateAdjustTrackBar.Minimum = 80;
-            this.baudrateAdjustTrackBar.Name = "baudrateAdjustTrackBar";
-            this.baudrateAdjustTrackBar.Size = new System.Drawing.Size(219, 45);
-            this.baudrateAdjustTrackBar.TabIndex = 48;
-            this.baudrateAdjustTrackBar.TickFrequency = 40;
-            this.baudrateAdjustTrackBar.Value = 200;
-            this.baudrateAdjustTrackBar.Scroll += new System.EventHandler(this.baudrateAdjustTrackBar_Scroll);
             // 
             // minMaxBaudrateAdjLabel
             // 
@@ -228,9 +214,8 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(230, 239);
+            this.ClientSize = new System.Drawing.Size(230, 199);
             this.Controls.Add(this.baudrateAdjustNumUpDown);
-            this.Controls.Add(this.baudrateAdjustTrackBar);
             this.Controls.Add(this.minMaxBaudrateAdjLabel);
             this.Controls.Add(this.baudrateAdjLabel);
             this.Controls.Add(this.cameraStatusLabel);
@@ -255,7 +240,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetNumUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustNumUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustTrackBar)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -275,7 +259,6 @@
         private System.Windows.Forms.Label tecStatusLabel;
         private System.Windows.Forms.Label cameraStatusLabel;
         private System.Windows.Forms.NumericUpDown baudrateAdjustNumUpDown;
-        private System.Windows.Forms.TrackBar baudrateAdjustTrackBar;
         private System.Windows.Forms.Label minMaxBaudrateAdjLabel;
         private System.Windows.Forms.Label baudrateAdjLabel;
     }

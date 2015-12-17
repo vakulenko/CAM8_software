@@ -126,7 +126,6 @@ namespace ASCOM.cam85_v02
                 {
                     pBaudrateAdjust = value;
                     this.baudrateAdjustNumUpDown.Value = pBaudrateAdjust;
-                    this.baudrateAdjustTrackBar.Value = pBaudrateAdjust;
                 }
                 else throw new ASCOM.InvalidValueException("cam_settings, baudrateAdjust");
             }
@@ -140,11 +139,6 @@ namespace ASCOM.cam85_v02
         private void OffsetTrackBar_Scroll(object sender, EventArgs e)
         {
             offsetNumUpDown.Value = offsetTrackBar.Value;
-        }
-
-        private void baudrateAdjustTrackBar_Scroll(object sender, EventArgs e)
-        {
-            baudrateAdjustNumUpDown.Value = baudrateAdjustTrackBar.Value;
         }
 
         private void OnTopCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -165,7 +159,16 @@ namespace ASCOM.cam85_v02
 
         private void baudrateAdjustNumUpDown_ValueChanged(object sender, EventArgs e)
         {
-            baudrateAdjustTrackBar.Value = baudrateAdjust = (int) baudrateAdjustNumUpDown.Value;
+            int diff = 40;
+            for (int i = minBaudrateAdjust; i <= maxBaudrateAdjust; i += 40)
+            {
+                if (Math.Abs(i - baudrateAdjustNumUpDown.Value) <= Math.Abs(diff))
+                {
+                    diff = (int) (i - baudrateAdjustNumUpDown.Value);
+                }
+            }
+            baudrateAdjustNumUpDown.Value = baudrateAdjustNumUpDown.Value + diff;
+            baudrateAdjust = (int) baudrateAdjustNumUpDown.Value;
         }
 
         private void camSettings_FormClosing(object sender, FormClosingEventArgs e)
