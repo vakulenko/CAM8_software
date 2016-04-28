@@ -968,6 +968,14 @@ namespace ASCOM.cam8_v09
                 if ((coolerEnabledState) && (tec.Connect))
                 {
                     tl.LogMessage("CoolerOn Set", "coolerOn=" + value.ToString());
+                    if (value)
+                    {
+                        this.SetCCDTemperature = this.SetCCDTemperature;
+                    }
+                    else
+                    {
+                        slowCoolingTimer.Enabled = false;
+                    }
                     tec.CoolerOn = value;
                 }
                 else
@@ -1452,27 +1460,30 @@ namespace ASCOM.cam8_v09
 
         private static void slowCoolingTimerTick(Object source, ElapsedEventArgs e)
         {
-            tl.LogMessage("slowCoolingTimerTick", "slowCoolingInterm=" + slowCoolingInterm.ToString() + " step size=" + (settingsForm.slowCoolingSpeed / 10.0).ToString());
-            if (slowCoolingCoolingDirection)
+            if (slowCoolingTimer.Enabled && settingsForm.slowCoolingEnabled)
             {
-                slowCoolingInterm -= (settingsForm.slowCoolingSpeed / 10.0);
-                if (slowCoolingInterm <= slowCoolingTarger)
+                tl.LogMessage("slowCoolingTimerTick", "slowCoolingInterm=" + slowCoolingInterm.ToString() + " step size=" + (settingsForm.slowCoolingSpeed / 10.0).ToString());
+                if (slowCoolingCoolingDirection)
                 {
-                    slowCoolingInterm = slowCoolingTarger;
+                    slowCoolingInterm -= (settingsForm.slowCoolingSpeed / 10.0);
+                    if (slowCoolingInterm <= slowCoolingTarger)
+                    {
+                        slowCoolingInterm = slowCoolingTarger;
+                    }
                 }
-            }
-            else
-            {
-                slowCoolingInterm += (settingsForm.slowCoolingSpeed / 10.0);
-                if (slowCoolingInterm >= slowCoolingTarger)
+                else
                 {
-                    slowCoolingInterm = slowCoolingTarger;
+                    slowCoolingInterm += (settingsForm.slowCoolingSpeed / 10.0);
+                    if (slowCoolingInterm >= slowCoolingTarger)
+                    {
+                        slowCoolingInterm = slowCoolingTarger;
+                    }
                 }
-            }
-            tec.SetCCDTemperature = slowCoolingInterm;
-            if (System.Math.Abs(slowCoolingInterm - slowCoolingTarger) <= 0.01)
-            {
-                slowCoolingTimer.Enabled = false;
+                tec.SetCCDTemperature = slowCoolingInterm;
+                if (System.Math.Abs(slowCoolingInterm - slowCoolingTarger) <= 0.01)
+                {
+                    slowCoolingTimer.Enabled = false;
+                }
             }
         }
 
