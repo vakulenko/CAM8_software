@@ -1099,8 +1099,8 @@ namespace ASCOM.cam85m_v01
         {
             get
             {
-                tl.LogMessage("HasShutter Get", false.ToString());
-                return false;
+                tl.LogMessage("HasShutter Get", true.ToString());
+                return true;
             }
         }
 
@@ -1535,7 +1535,7 @@ namespace ASCOM.cam85m_v01
                                            " cameraNumY=" + cameraNumY.ToString() +
                                            " Duration=" + Duration.ToString() +
                                            " Light=" + true.ToString());
-            cameraStartExposure((int)cameraBinX, cameraStartX * cameraBinX, cameraStartY * cameraBinY, cameraNumX * cameraBinX, cameraNumY * cameraBinY, Duration, true);
+            cameraStartExposure((int)cameraBinX, cameraStartX * cameraBinX, cameraStartY * cameraBinY, cameraNumX * cameraBinX, cameraNumY * cameraBinY, Duration, Light);
         }
 
         public int StartX
