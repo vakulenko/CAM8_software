@@ -550,6 +550,7 @@ function cameraConnect () : WordBool; stdcall; export;
 var  FT_OP_flag : boolean;
 begin
   FT_OP_flag:=true;
+  FT_Enable_Error_Report:=false;
   errorWriteFlag:=false;
   if (FT_OP_flag) then
   begin
