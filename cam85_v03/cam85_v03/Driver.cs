@@ -8,11 +8,6 @@
 // 29-apr-2016  VSS 0.3     Added baudrate adjustment and slow cooling
 // --------------------------------------------------------------------------------
 
-
-// This is used to define code in the template that is specific to one class implementation
-// unused code canbe deleted and this definition removed.
-#define Camera
-
 #define Camera
 
 using System;
@@ -32,6 +27,8 @@ using System.Collections;
 using System.IO.Ports;
 //for pauses
 using System.Threading;
+using System.Timers;
+
 
 namespace ASCOM.cam85_v03
 {
@@ -332,31 +329,37 @@ namespace ASCOM.cam85_v03
         internal static string traceStateProfileName = "Trace Level";
         internal static string gainStateProfileName = "gain";
         internal static string offsetStateProfileName = "offset";
+        internal static string baudrateStateProfileName = "baudrate";
         internal static string onTopStateProfileName = "onTop";
         internal static string coolerEnabledStateProfileName = "coolerEnabled";
         internal static string coolerComPortStateProfileName = "coolerComPort";
-        internal static string baudrateAdjustStateProfileName = "speedAdjust";
+        internal static string slowCoolingEnabledProfileName = "slowCooling";
+        internal static string slowCoolingSpeedProfileName = "slowCoolingSpeed";
         internal static string traceStateDefault = "false";
         internal static string gainStateDefault = "34";
         internal static string offsetStateDefault = "-7";
+        internal static string baudrateStateDefault = "160";
         internal static string onTopStateDefault = "true";
         internal static string coolerEnabledStateDefault = "false";
         internal static string coolerComPortStateDefault = "COM1";
-        internal static string baudrateAdjustStateDefault = "200";
+        internal static string slowCoolingEnabledStateDefault = "false";
+        internal static string slowCoolingSpeedStateDefault = "5";
         internal static bool traceState;
         internal static short gainState;
         internal static short offsetState;
+        internal static short baudrateState;
         internal static bool onTopState;
         internal static bool coolerEnabledState;
         internal static string coolerComPortState;
-        internal static int baudrateAdjustState;
+        internal static bool slowCoolingEnabledState;
+        internal static short slowCoolingSpeedState;
 
         /// <summary>
         /// Form, handle gain/offset settings
         /// </summary>
-        private camSettings settingsForm;
+        private static camSettings settingsForm;
 
-        private TECControl tec;
+        private static TECControl tec;
 
         /// <summary>
         /// Private variable to hold the connected state
@@ -376,7 +379,9 @@ namespace ASCOM.cam85_v03
         /// <summary>
         /// Private variable to hold the trace logger object (creates a diagnostic log file with information that you specify)
         /// </summary>
-        private TraceLogger tl;
+        private static TraceLogger tl;
+
+        private const string LowLevelDLL = "cam85ll03.dll";
 
         //Imports cam85ll03.dll functions
         [DllImport("cam85ll03.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
@@ -426,10 +431,15 @@ namespace ASCOM.cam85_v03
             settingsForm = new camSettings();
             settingsForm.gain = gainState;
             settingsForm.offset = offsetState;
+            settingsForm.baudrate = baudrateState;
             settingsForm.onTop = onTopState;
+            settingsForm.slowCoolingEnabled = slowCoolingEnabledState;
+            settingsForm.slowCoolingSpeed = slowCoolingSpeedState;
             if (!coolerEnabledState) settingsForm.tecStatus = "disabled";
-            settingsForm.baudrateAdjust = baudrateAdjustState;
             tec = new TECControl(coolerComPortState, traceState);
+            slowCoolingTimer = new System.Timers.Timer(60000);
+            slowCoolingTimer.Enabled = false;
+            slowCoolingTimer.Elapsed += slowCoolingTimerTick;
             tl.LogMessage("Camera", "Completed initialisation");
         }
 
@@ -521,11 +531,11 @@ namespace ASCOM.cam85_v03
                 if (value == IsConnected) return;
                 if (value)
                 {
-                    tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from cam85ll03.dll");
+                    tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from " + LowLevelDLL);
                     if (cameraConnect() == false)
                     {
-                        tl.LogMessage("Connected Set", "Cant connect to cam85");
-                        throw new ASCOM.NotConnectedException("Cant connect to cam85");
+                        tl.LogMessage("Connected Set", "Cant connect to " + this.Name);
+                        throw new ASCOM.NotConnectedException("Cant connect to " + this.Name);
                     }
                     if (coolerEnabledState)
                     {
@@ -545,11 +555,11 @@ namespace ASCOM.cam85_v03
                 }
                 else
                 {
-                    tl.LogMessage("Connected Set", "Disconnecting from camera, call cameraConnect from cam85ll03.dll");
+                    tl.LogMessage("Connected Set", "Disconnecting from camera, call cameraConnect from" + LowLevelDLL);
                     if (cameraDisconnect() == false)
                     {
-                        tl.LogMessage("Connected Set", "Cant disconnect cam85");
-                        throw new ASCOM.NotConnectedException("Cant disconnect cam85");
+                        tl.LogMessage("Connected Set", "Cant disconnect " + this.Name);
+                        throw new ASCOM.NotConnectedException("Cant disconnect " + this.Name);
                     }
                     if (coolerEnabledState)
                     {
@@ -653,13 +663,19 @@ namespace ASCOM.cam85_v03
 
         private int cameraError = 0;
 
+        private static double slowCoolingInterm = 0.0;
+        private static bool slowCoolingCoolingDirection = true; //true==cooling, false==heating
+        private static double slowCoolingTarger = 0.0;
+        private static System.Timers.Timer slowCoolingTimer;
+
+
         public void AbortExposure()
         {
-            tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from cam85ll03.dll");
+            tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from " + LowLevelDLL);
             if (cameraStopExposure() == false)
             {
-                tl.LogMessage("AbortExposure", "InvalidOperationException Abort Exposure failed");
-                throw new ASCOM.InvalidOperationException("Abort Exposure failed");
+                tl.LogMessage("AbortExposure", "PropertyNotImplementedException Abort Exposure failed");
+                throw new ASCOM.PropertyNotImplementedException("Abort Exposure failed");
             }
         }
 
@@ -786,13 +802,13 @@ namespace ASCOM.cam85_v03
         {
             get
             {
-                tl.LogMessage("CameraState Get", "Call cameraGetError from cam85ll03.dll");
+                tl.LogMessage("CameraState Get", "Call cameraGetError from " + LowLevelDLL);
                 if (cameraError != (int)cameraGetError())
                 {
                     settingsForm.cameraError = cameraError = (int)cameraGetError();
                     tl.LogMessage("CameraState Get", "cameraError = " + cameraError.ToString());
                 }
-                tl.LogMessage("CameraState Get", "Call cameraGetCameraState from cam85ll03.dll");
+                tl.LogMessage("CameraState Get", "Call cameraGetCameraState from " + LowLevelDLL);
                 switch ((short)cameraGetCameraState())
                 {
                     case CameraStateIdle:
@@ -946,6 +962,14 @@ namespace ASCOM.cam85_v03
                 if ((coolerEnabledState) && (tec.Connect))
                 {
                     tl.LogMessage("CoolerOn Set", "coolerOn=" + value.ToString());
+                    if (value)
+                    {
+                        this.SetCCDTemperature = this.SetCCDTemperature;
+                    }
+                    else
+                    {
+                        slowCoolingTimer.Enabled = false;
+                    }
                     tec.CoolerOn = value;
                 }
                 else
@@ -1077,8 +1101,8 @@ namespace ASCOM.cam85_v03
         {
             get
             {
-                tl.LogMessage("HasShutter Get", true.ToString());
-                return true;
+                tl.LogMessage("HasShutter Get", false.ToString());
+                return false;
             }
         }
 
@@ -1111,7 +1135,7 @@ namespace ASCOM.cam85_v03
 
                 uint imagepoint;
                 //Get image pointer
-                tl.LogMessage("ImageArray Get", "Call cameraGetImage from cam85ll03.dll");
+                tl.LogMessage("ImageArray Get", "Call cameraGetImage from " + LowLevelDLL);
                 imagepoint = cameraGetImage();
                 unsafe
                 {
@@ -1178,7 +1202,7 @@ namespace ASCOM.cam85_v03
         {
             get
             {
-                tl.LogMessage("ImageReady Get", "Call cameraGetImageReady from cam85ll03.dll");
+                tl.LogMessage("ImageReady Get", "Call cameraGetImageReady from " + LowLevelDLL);
                 cameraImageReady = cameraGetImageReady();
                 tl.LogMessage("ImageReady Get", cameraImageReady.ToString());
                 return cameraImageReady;
@@ -1368,8 +1392,14 @@ namespace ASCOM.cam85_v03
             {
                 if ((coolerEnabledState) && (tec.Connect))
                 {
-                    tl.LogMessage("SetCCDTemperature Get", "heatsinkTemp=" + tec.SetCCDTemperature.ToString());
-                    return tec.SetCCDTemperature;
+                    
+                    if (settingsForm.slowCoolingEnabled)
+                    {
+                        tl.LogMessage("SetCCDTemperature Get", "setCCDTemp=" + slowCoolingTarger.ToString());
+                        return slowCoolingTarger;
+                    }
+                    tl.LogMessage("SetCCDTemperature Get", "setCCDTemp=" + tec.SetCCDTemperature.ToString());                  
+                    return tec.SetCCDTemperature;                   
                 }
                 else
                 {
@@ -1387,12 +1417,66 @@ namespace ASCOM.cam85_v03
                         tl.LogMessage("SetCCDTemperature Set", "InvalidValueException SetCCDTemperature must be in range [minSetTemp;maxSetTemp]");
                         throw new InvalidValueException("SetCCDTemperature Set", value.ToString(), "SetCCDTemperature must be in range [-50;50]");
                     }
-                    tec.SetCCDTemperature = value;
+
+                    if (settingsForm.slowCoolingEnabled)
+                    {
+                        tl.LogMessage("SetCCDTemperature Set", "start slow cooling with step size=" + (settingsForm.slowCoolingSpeed / 10.0).ToString());
+                        slowCoolingTarger = value;
+                        slowCoolingInterm = this.CCDTemperature;                        
+                        if ((this.CCDTemperature - value) > 0)
+                        {
+                            slowCoolingCoolingDirection = true;
+                            slowCoolingTimer.Enabled = true;
+                        }
+                        else if ((this.CCDTemperature - value) < 0)
+                        {
+                            slowCoolingCoolingDirection = false;
+                            slowCoolingTimer.Enabled = true;
+                        }
+                        else
+                        {
+                            slowCoolingTimer.Enabled = false;
+                            tec.SetCCDTemperature = value;
+                        }
+                    }
+                    else
+                    {
+                        tec.SetCCDTemperature = value;
+                    }
                 }
                 else
                 {
                     tl.LogMessage("SetCCDTemperature Set", "Not implemented");
                     throw new ASCOM.PropertyNotImplementedException("SetCCDTemperature", true);
+                }
+            }
+        }
+
+        private static void slowCoolingTimerTick(Object source, ElapsedEventArgs e)
+        {
+            if (slowCoolingTimer.Enabled && settingsForm.slowCoolingEnabled)
+            {
+                tl.LogMessage("slowCoolingTimerTick", "slowCoolingInterm=" + slowCoolingInterm.ToString() + " step size=" + (settingsForm.slowCoolingSpeed / 10.0).ToString());
+                if (slowCoolingCoolingDirection)
+                {
+                    slowCoolingInterm -= (settingsForm.slowCoolingSpeed / 10.0);
+                    if (slowCoolingInterm <= slowCoolingTarger)
+                    {
+                        slowCoolingInterm = slowCoolingTarger;
+                    }
+                }
+                else
+                {
+                    slowCoolingInterm += (settingsForm.slowCoolingSpeed / 10.0);
+                    if (slowCoolingInterm >= slowCoolingTarger)
+                    {
+                        slowCoolingInterm = slowCoolingTarger;
+                    }
+                }
+                tec.SetCCDTemperature = slowCoolingInterm;
+                if (System.Math.Abs(slowCoolingInterm - slowCoolingTarger) <= 0.01)
+                {
+                    slowCoolingTimer.Enabled = false;
                 }
             }
         }
@@ -1417,33 +1501,35 @@ namespace ASCOM.cam85_v03
                 throw new InvalidValueException("StartExposure", (cameraStartY + cameraNumY).ToString(), "(cameraStartY + cameraNumY) must be < (ccdHeight / cameraBinY)");
             }
             //set camera gain/offset
-            tl.LogMessage("StartExposure", "Call cameraSetGain from cam85ll03.dll args: gain=" + settingsForm.gain.ToString());
+            tl.LogMessage("StartExposure", "Call cameraSetGain from " + LowLevelDLL + " args: gain=" + settingsForm.gain.ToString());
             if (cameraSetGain(settingsForm.gain) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set gain to cam85");
-                throw new ASCOM.InvalidOperationException("Cant set gain to cam85");
+                tl.LogMessage("StartExposure", "Cant set gain to " + this.Name);
+                throw new ASCOM.InvalidOperationException("Cant set gain to " + this.Name);
             }
-            tl.LogMessage("StartExposure", "Call cameraSetOffset from cam85ll03.dll args: offset=" + settingsForm.offset.ToString());
+            tl.LogMessage("StartExposure", "Call cameraSetOffset from " + LowLevelDLL + " args: offset=" + settingsForm.offset.ToString());
             if (cameraSetOffset(settingsForm.offset) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set offset to cam85");
-                throw new ASCOM.InvalidOperationException("Cant set offset to cam85");
+                tl.LogMessage("StartExposure", "Cant set offset to " + this.Name);
+                throw new ASCOM.InvalidOperationException("Cant set offset to " + this.Name);
             }
-            tl.LogMessage("StartExposure", "Call cameraSetBaudrate from cam85ll03.dll args: baudrateAdjust=" + settingsForm.baudrateAdjust.ToString());
-            if (cameraSetBaudrate(settingsForm.baudrateAdjust) == false)
+            tl.LogMessage("StartExposure", "Call cameraSetBaudrate from " + LowLevelDLL + " args: baudrate=" + settingsForm.baudrate.ToString());
+            if (cameraSetBaudrate(settingsForm.baudrate) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set baudrate to cam85");
-                throw new ASCOM.InvalidOperationException("Cant set baudrate to cam85");
+                tl.LogMessage("StartExposure", "Cant set baudrate to " + this.Name);
+                throw new ASCOM.InvalidOperationException("Cant set baudrate to " + this.Name);
             }
             //Save parameters
             cameraLastExposureDuration = Duration;
             exposureStart = DateTime.Now;
             gainState = settingsForm.gain;
             offsetState = settingsForm.offset;
+            baudrateState = settingsForm.baudrate;
             onTopState = settingsForm.onTop;
-            baudrateAdjustState = settingsForm.baudrateAdjust;
+            slowCoolingEnabledState = settingsForm.slowCoolingEnabled;
+            slowCoolingSpeedState = settingsForm.slowCoolingSpeed;        
             //start exposure
-            tl.LogMessage("StartExposure", "Call cameraStartExposure from cam85ll03.dll, args: ");
+            tl.LogMessage("StartExposure", "Call cameraStartExposure from " + LowLevelDLL + " args: ");
             tl.LogMessage("StartExposure", " cameraBinX=" + cameraBinX.ToString() +
                                            " cameraStartX=" + cameraStartX.ToString() +
                                            " cameraStartY=" + cameraStartY.ToString() +
@@ -1451,7 +1537,7 @@ namespace ASCOM.cam85_v03
                                            " cameraNumY=" + cameraNumY.ToString() +
                                            " Duration=" + Duration.ToString() +
                                            " Light=" + true.ToString());
-            cameraStartExposure((int)cameraBinX, cameraStartX * cameraBinX, cameraStartY * cameraBinY, cameraNumX * cameraBinX, cameraNumY * cameraBinY, Duration, Light);
+            cameraStartExposure((int)cameraBinX, cameraStartX * cameraBinX, cameraStartY * cameraBinY, cameraNumX * cameraBinX, cameraNumY * cameraBinY, Duration, true);
         }
 
         public int StartX
@@ -1494,11 +1580,11 @@ namespace ASCOM.cam85_v03
 
         public void StopExposure()
         {
-            tl.LogMessage("StopExposure", "Aborting exposure, call cameraStopExposure from cam85ll03.dll");
+            tl.LogMessage("StopExposure", "Aborting exposure, call cameraStopExposure from " + LowLevelDLL);
             if (cameraStopExposure() == false)
             {
-                tl.LogMessage("StopExposure", "InvalidOperationException Stop Exposure failed");
-                throw new ASCOM.InvalidOperationException("Stop Exposure failed");
+                tl.LogMessage("StopExposure", "PropertyNotImplementedException Stop Exposure failed");
+                throw new ASCOM.PropertyNotImplementedException("Stop Exposure failed");
             }
         }
 
@@ -1589,7 +1675,7 @@ namespace ASCOM.cam85_v03
         {
             get
             {
-                tl.LogMessage("IsConnected Get", "Call cameraIsConnected from cam85ll03.dll");
+                tl.LogMessage("IsConnected Get", "Call cameraIsConnected from " + LowLevelDLL);
                 cameraConnectedState = cameraIsConnected();
                 tl.LogMessage("IsConnected Get", "connectedState=" + cameraConnectedState.ToString());
                 return cameraConnectedState;
@@ -1623,7 +1709,9 @@ namespace ASCOM.cam85_v03
                 onTopState = Convert.ToBoolean(driverProfile.GetValue(driverID, onTopStateProfileName, string.Empty, onTopStateDefault));
                 coolerEnabledState = Convert.ToBoolean(driverProfile.GetValue(driverID, coolerEnabledStateProfileName, string.Empty, coolerEnabledStateDefault));
                 coolerComPortState = driverProfile.GetValue(driverID, coolerComPortStateProfileName, string.Empty, coolerComPortStateDefault);
-                baudrateAdjustState = Convert.ToInt16(driverProfile.GetValue(driverID, baudrateAdjustStateProfileName, string.Empty, baudrateAdjustStateDefault));
+                baudrateState = Convert.ToInt16(driverProfile.GetValue(driverID, baudrateStateProfileName, string.Empty, baudrateStateDefault));
+                slowCoolingEnabledState = Convert.ToBoolean(driverProfile.GetValue(driverID, slowCoolingEnabledProfileName, string.Empty, slowCoolingEnabledStateDefault));
+                slowCoolingSpeedState = Convert.ToInt16(driverProfile.GetValue(driverID, slowCoolingSpeedProfileName, string.Empty, slowCoolingSpeedStateDefault));
             }
         }
 
@@ -1641,7 +1729,9 @@ namespace ASCOM.cam85_v03
                 driverProfile.WriteValue(driverID, onTopStateProfileName, onTopState.ToString());
                 driverProfile.WriteValue(driverID, coolerEnabledStateProfileName, coolerEnabledState.ToString());
                 driverProfile.WriteValue(driverID, coolerComPortStateProfileName, coolerComPortState.ToString());
-                driverProfile.WriteValue(driverID, baudrateAdjustStateProfileName, baudrateAdjustState.ToString());
+                driverProfile.WriteValue(driverID, baudrateStateProfileName, baudrateState.ToString());
+                driverProfile.WriteValue(driverID, slowCoolingEnabledProfileName, slowCoolingEnabledState.ToString());
+                driverProfile.WriteValue(driverID, slowCoolingSpeedProfileName, slowCoolingSpeedState.ToString());                
             }
         }
 

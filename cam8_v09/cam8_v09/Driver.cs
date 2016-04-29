@@ -389,6 +389,8 @@ namespace ASCOM.cam8_v09
         /// </summary>
         private static TraceLogger tl;
 
+        private const string LowLevelDLL = "cam8ll09.dll";
+
         //Imports cam8ll09.dll functions
         [DllImport("cam8ll09.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraConnect();
@@ -537,11 +539,11 @@ namespace ASCOM.cam8_v09
                 if (value == IsConnected) return;
                 if (value)
                 {
-                    tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from cam8ll09.dll");
+                    tl.LogMessage("Connected Set", "Connecting to camera, call cameraConnect from " + LowLevelDLL);
                     if (cameraConnect() == false)
                     {
-                        tl.LogMessage("Connected Set", "Cant connect to cam8");
-                        throw new ASCOM.NotConnectedException("Cant connect to cam8");
+                        tl.LogMessage("Connected Set", "Cant connect to " + this.Name);
+                        throw new ASCOM.NotConnectedException("Cant connect to " + this.Name);
                     }
                     if (coolerEnabledState)
                     {
@@ -561,11 +563,11 @@ namespace ASCOM.cam8_v09
                 }
                 else
                 {
-                    tl.LogMessage("Connected Set", "Disconnecting from camera, call cameraConnect from cam8ll09.dll");
+                    tl.LogMessage("Connected Set", "Disconnecting from camera, call cameraConnect from" + LowLevelDLL);
                     if (cameraDisconnect() == false)
                     {
-                        tl.LogMessage("Connected Set", "Cant disconnect cam8");
-                        throw new ASCOM.NotConnectedException("Cant disconnect cam8");
+                        tl.LogMessage("Connected Set", "Cant disconnect " + this.Name);
+                        throw new ASCOM.NotConnectedException("Cant disconnect " + this.Name);
                     }
                     if (coolerEnabledState)
                     {
@@ -677,7 +679,7 @@ namespace ASCOM.cam8_v09
 
         public void AbortExposure()
         {
-            tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from cam8ll09.dll");
+            tl.LogMessage("AbortExposure", "Aborting exposure, call cameraStopExposure from " + LowLevelDLL);
             if (cameraStopExposure() == false)
             {
                 tl.LogMessage("AbortExposure", "PropertyNotImplementedException Abort Exposure failed");
@@ -808,13 +810,13 @@ namespace ASCOM.cam8_v09
         {
             get
             {
-                tl.LogMessage("CameraState Get", "Call cameraGetError from cam8ll09.dll");
+                tl.LogMessage("CameraState Get", "Call cameraGetError from " + LowLevelDLL);
                 if (cameraError != (int)cameraGetError())
                 {
                     settingsForm.cameraError = cameraError = (int)cameraGetError();
                     tl.LogMessage("CameraState Get", "cameraError = " + cameraError.ToString());
                 }
-                tl.LogMessage("CameraState Get", "Call cameraGetCameraState from cam8ll09.dll");
+                tl.LogMessage("CameraState Get", "Call cameraGetCameraState from " + LowLevelDLL);
                 switch ((short)cameraGetCameraState())
                 {
                     case CameraStateIdle:
@@ -1141,7 +1143,7 @@ namespace ASCOM.cam8_v09
 
                 uint imagepoint;
                 //Get image pointer
-                tl.LogMessage("ImageArray Get", "Call cameraGetImage from cam8ll09.dll");
+                tl.LogMessage("ImageArray Get", "Call cameraGetImage from " + LowLevelDLL);
                 imagepoint = cameraGetImage();
                 unsafe
                 {
@@ -1208,7 +1210,7 @@ namespace ASCOM.cam8_v09
         {
             get
             {
-                tl.LogMessage("ImageReady Get", "Call cameraGetImageReady from cam8ll09.dll");
+                tl.LogMessage("ImageReady Get", "Call cameraGetImageReady from " + LowLevelDLL);
                 cameraImageReady = cameraGetImageReady();
                 tl.LogMessage("ImageReady Get", cameraImageReady.ToString());
                 return cameraImageReady;
@@ -1507,23 +1509,23 @@ namespace ASCOM.cam8_v09
                 throw new InvalidValueException("StartExposure", (cameraStartY + cameraNumY).ToString(), "(cameraStartY + cameraNumY) must be < (ccdHeight / cameraBinY)");
             }
             //set camera gain/offset
-            tl.LogMessage("StartExposure", "Call cameraSetGain from cam8ll09.dll args: gain=" + settingsForm.gain.ToString());
+            tl.LogMessage("StartExposure", "Call cameraSetGain from " + LowLevelDLL + " args: gain=" + settingsForm.gain.ToString());
             if (cameraSetGain(settingsForm.gain) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set gain to cam8");
-                throw new ASCOM.InvalidOperationException("Cant set gain to cam8");
+                tl.LogMessage("StartExposure", "Cant set gain to " + this.Name);
+                throw new ASCOM.InvalidOperationException("Cant set gain to " + this.Name);
             }
-            tl.LogMessage("StartExposure", "Call cameraSetOffset from cam8ll09.dll args: offset=" + settingsForm.offset.ToString());
+            tl.LogMessage("StartExposure", "Call cameraSetOffset from " + LowLevelDLL + " args: offset=" + settingsForm.offset.ToString());
             if (cameraSetOffset(settingsForm.offset) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set offset to cam8");
-                throw new ASCOM.InvalidOperationException("Cant set offset to cam8");
+                tl.LogMessage("StartExposure", "Cant set offset to " + this.Name);
+                throw new ASCOM.InvalidOperationException("Cant set offset to " + this.Name);
             }
-            tl.LogMessage("StartExposure", "Call cameraSetBaudrate from cam8ll09.dll args: baudrate=" + settingsForm.baudrate.ToString());
+            tl.LogMessage("StartExposure", "Call cameraSetBaudrate from " + LowLevelDLL + " args: baudrate=" + settingsForm.baudrate.ToString());
             if (cameraSetBaudrate(settingsForm.baudrate) == false)
             {
-                tl.LogMessage("StartExposure", "Cant set baudrate to cam85");
-                throw new ASCOM.InvalidOperationException("Cant set baudrate to cam85");
+                tl.LogMessage("StartExposure", "Cant set baudrate to " + this.Name);
+                throw new ASCOM.InvalidOperationException("Cant set baudrate to " + this.Name);
             }
             //Save parameters
             cameraLastExposureDuration = Duration;
@@ -1535,7 +1537,7 @@ namespace ASCOM.cam8_v09
             slowCoolingEnabledState = settingsForm.slowCoolingEnabled;
             slowCoolingSpeedState = settingsForm.slowCoolingSpeed;        
             //start exposure
-            tl.LogMessage("StartExposure", "Call cameraStartExposure from cam8ll09.dll, args: ");
+            tl.LogMessage("StartExposure", "Call cameraStartExposure from " + LowLevelDLL + " args: ");
             tl.LogMessage("StartExposure", " cameraBinX=" + cameraBinX.ToString() +
                                            " cameraStartX=" + cameraStartX.ToString() +
                                            " cameraStartY=" + cameraStartY.ToString() +
@@ -1586,7 +1588,7 @@ namespace ASCOM.cam8_v09
 
         public void StopExposure()
         {
-            tl.LogMessage("StopExposure", "Aborting exposure, call cameraStopExposure from cam8ll09.dll");
+            tl.LogMessage("StopExposure", "Aborting exposure, call cameraStopExposure from " + LowLevelDLL);
             if (cameraStopExposure() == false)
             {
                 tl.LogMessage("StopExposure", "PropertyNotImplementedException Stop Exposure failed");
@@ -1681,7 +1683,7 @@ namespace ASCOM.cam8_v09
         {
             get
             {
-                tl.LogMessage("IsConnected Get", "Call cameraIsConnected from cam8ll09.dll");
+                tl.LogMessage("IsConnected Get", "Call cameraIsConnected from " + LowLevelDLL);
                 cameraConnectedState = cameraIsConnected();
                 tl.LogMessage("IsConnected Get", "connectedState=" + cameraConnectedState.ToString());
                 return cameraConnectedState;

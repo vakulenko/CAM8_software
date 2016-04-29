@@ -15,8 +15,10 @@ namespace ASCOM.cam85_v03
         const short maxGain = 63;
         const short minOffset = -127;
         const short maxOffset = 127;
-        const int minBaudrateAdjust = 120;
-        const int maxBaudrateAdjust = 200;
+        const short minBaudrate = 50;
+        const short maxBaudrate = 300;
+        const short minCoolingSpeed = 1;
+        const short maxCoolingSpeed = 20;
 
         const short CameraStatusOperational = 0;
         const short CameraStatusWarning = 1;
@@ -27,9 +29,9 @@ namespace ASCOM.cam85_v03
             InitializeComponent();
         }
 
-        private short pGain = 0;
-        private short pOffset = 0;
-        private int pBaudrateAdjust = 200;
+        private short pGain = minGain;
+        private short pOffset = minOffset;
+        private short pBaudrate = minBaudrate;
 
         public short gain
         {
@@ -66,6 +68,23 @@ namespace ASCOM.cam85_v03
             }
         }
 
+        public short baudrate
+        {
+            get
+            {
+                return pBaudrate;
+            }
+            set
+            {
+                if ((value >= minBaudrate) && (value <= maxBaudrate))
+                {
+                    pBaudrate = value;
+                    this.baudrateNumUpDown.Value = pBaudrate;
+                }
+                else throw new ASCOM.InvalidValueException("cam_settings, baudrate");
+            }
+        }
+
         public string tecStatus
         {
             set
@@ -83,6 +102,34 @@ namespace ASCOM.cam85_v03
             set
             {
                 onTopCheckBox.Checked = value;
+            }
+        }
+
+        public bool slowCoolingEnabled
+        {
+            get
+            {
+                return slowCoolingCheckBox.Checked;
+            }
+            set
+            {
+                slowCoolingCheckBox.Checked = value;
+            }
+        }
+
+        public short slowCoolingSpeed
+        {
+            get
+            {
+                return (short) (((double)slowCoolingNumUpDown.Value) * 10.0);
+            }
+            set
+            {                
+                if ((value >= minCoolingSpeed) && (value <= maxCoolingSpeed))
+                {
+                    slowCoolingNumUpDown.Value = (decimal) (value / 10.0);
+                }
+                else throw new ASCOM.InvalidValueException("cam_settings, coolingSpeed");
             }
         }
 
@@ -114,23 +161,6 @@ namespace ASCOM.cam85_v03
             }
         }
 
-        public int baudrateAdjust
-        {
-            get
-            {
-                return pBaudrateAdjust;
-            }
-            set
-            {
-                if ((value >= minBaudrateAdjust) && (value <= maxBaudrateAdjust))
-                {
-                    pBaudrateAdjust = value;
-                    this.baudrateAdjustNumUpDown.Value = pBaudrateAdjust;
-                }
-                else throw new ASCOM.InvalidValueException("cam_settings, baudrateAdjust");
-            }
-        }
-
         private void GainTrackBar_Scroll(object sender, EventArgs e)
         {
             gainNumUpDown.Value = gainTrackBar.Value;
@@ -157,23 +187,10 @@ namespace ASCOM.cam85_v03
             offsetTrackBar.Value = offset = (short)offsetNumUpDown.Value;
         }
 
-        private void baudrateAdjustNumUpDown_ValueChanged(object sender, EventArgs e)
-        {
-            int diff = 40;
-            for (int i = minBaudrateAdjust; i <= maxBaudrateAdjust; i += 40)
-            {
-                if (Math.Abs(i - baudrateAdjustNumUpDown.Value) <= Math.Abs(diff))
-                {
-                    diff = (int)(i - baudrateAdjustNumUpDown.Value);
-                }
-            }
-            baudrateAdjustNumUpDown.Value = baudrateAdjustNumUpDown.Value + diff;
-            baudrateAdjust = (int)baudrateAdjustNumUpDown.Value;
-        }
-
         private void camSettings_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
         }
+
     }
 }

@@ -39,14 +39,18 @@
             this.offsetNumUpDown = new System.Windows.Forms.NumericUpDown();
             this.tecStatusLabel = new System.Windows.Forms.Label();
             this.cameraStatusLabel = new System.Windows.Forms.Label();
-            this.baudrateAdjustNumUpDown = new System.Windows.Forms.NumericUpDown();
-            this.minMaxBaudrateAdjLabel = new System.Windows.Forms.Label();
-            this.baudrateAdjLabel = new System.Windows.Forms.Label();
+            this.baudrateNumUpDown = new System.Windows.Forms.NumericUpDown();
+            this.minMaxBaudrateLabel = new System.Windows.Forms.Label();
+            this.baudrateLabel = new System.Windows.Forms.Label();
+            this.slowCoolingCheckBox = new System.Windows.Forms.CheckBox();
+            this.slowCoolingLabel = new System.Windows.Forms.Label();
+            this.slowCoolingNumUpDown = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.gainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetNumUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustNumUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.baudrateNumUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.slowCoolingNumUpDown)).BeginInit();
             this.SuspendLayout();
             // 
             // gainTrackBar
@@ -149,7 +153,7 @@
             // tecStatusLabel
             // 
             this.tecStatusLabel.AutoSize = true;
-            this.tecStatusLabel.Location = new System.Drawing.Point(6, 159);
+            this.tecStatusLabel.Location = new System.Drawing.Point(6, 192);
             this.tecStatusLabel.Name = "tecStatusLabel";
             this.tecStatusLabel.Size = new System.Drawing.Size(62, 13);
             this.tecStatusLabel.TabIndex = 44;
@@ -158,66 +162,110 @@
             // cameraStatusLabel
             // 
             this.cameraStatusLabel.AutoSize = true;
-            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 180);
+            this.cameraStatusLabel.Location = new System.Drawing.Point(6, 214);
             this.cameraStatusLabel.Name = "cameraStatusLabel";
             this.cameraStatusLabel.Size = new System.Drawing.Size(132, 13);
             this.cameraStatusLabel.TabIndex = 45;
             this.cameraStatusLabel.Text = "Camera status: operational";
             // 
-            // baudrateAdjustNumUpDown
+            // baudrateNumUpDown
             // 
-            this.baudrateAdjustNumUpDown.Increment = new decimal(new int[] {
-            40,
+            this.baudrateNumUpDown.Location = new System.Drawing.Point(103, 138);
+            this.baudrateNumUpDown.Maximum = new decimal(new int[] {
+            300,
             0,
             0,
             0});
-            this.baudrateAdjustNumUpDown.Location = new System.Drawing.Point(130, 136);
-            this.baudrateAdjustNumUpDown.Maximum = new decimal(new int[] {
-            200,
+            this.baudrateNumUpDown.Minimum = new decimal(new int[] {
+            50,
             0,
             0,
             0});
-            this.baudrateAdjustNumUpDown.Minimum = new decimal(new int[] {
-            120,
+            this.baudrateNumUpDown.Name = "baudrateNumUpDown";
+            this.baudrateNumUpDown.Size = new System.Drawing.Size(51, 20);
+            this.baudrateNumUpDown.TabIndex = 49;
+            this.baudrateNumUpDown.Value = new decimal(new int[] {
+            160,
             0,
             0,
             0});
-            this.baudrateAdjustNumUpDown.Name = "baudrateAdjustNumUpDown";
-            this.baudrateAdjustNumUpDown.Size = new System.Drawing.Size(51, 20);
-            this.baudrateAdjustNumUpDown.TabIndex = 49;
-            this.baudrateAdjustNumUpDown.Value = new decimal(new int[] {
-            200,
+            // 
+            // minMaxBaudrateLabel
+            // 
+            this.minMaxBaudrateLabel.AutoSize = true;
+            this.minMaxBaudrateLabel.Location = new System.Drawing.Point(54, 141);
+            this.minMaxBaudrateLabel.Name = "minMaxBaudrateLabel";
+            this.minMaxBaudrateLabel.Size = new System.Drawing.Size(43, 13);
+            this.minMaxBaudrateLabel.TabIndex = 47;
+            this.minMaxBaudrateLabel.Text = "50..300";
+            // 
+            // baudrateLabel
+            // 
+            this.baudrateLabel.AutoSize = true;
+            this.baudrateLabel.Location = new System.Drawing.Point(6, 141);
+            this.baudrateLabel.Name = "baudrateLabel";
+            this.baudrateLabel.Size = new System.Drawing.Size(50, 13);
+            this.baudrateLabel.TabIndex = 46;
+            this.baudrateLabel.Text = "Baudrate";
+            // 
+            // slowCoolingCheckBox
+            // 
+            this.slowCoolingCheckBox.AutoSize = true;
+            this.slowCoolingCheckBox.Location = new System.Drawing.Point(9, 166);
+            this.slowCoolingCheckBox.Name = "slowCoolingCheckBox";
+            this.slowCoolingCheckBox.Size = new System.Drawing.Size(87, 17);
+            this.slowCoolingCheckBox.TabIndex = 50;
+            this.slowCoolingCheckBox.Text = "Slow Cooling";
+            this.slowCoolingCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // slowCoolingLabel
+            // 
+            this.slowCoolingLabel.AutoSize = true;
+            this.slowCoolingLabel.Location = new System.Drawing.Point(159, 168);
+            this.slowCoolingLabel.Name = "slowCoolingLabel";
+            this.slowCoolingLabel.Size = new System.Drawing.Size(35, 13);
+            this.slowCoolingLabel.TabIndex = 51;
+            this.slowCoolingLabel.Text = "C/min";
+            // 
+            // slowCoolingNumUpDown
+            // 
+            this.slowCoolingNumUpDown.DecimalPlaces = 1;
+            this.slowCoolingNumUpDown.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.slowCoolingNumUpDown.Location = new System.Drawing.Point(102, 165);
+            this.slowCoolingNumUpDown.Maximum = new decimal(new int[] {
+            2,
             0,
             0,
             0});
-            this.baudrateAdjustNumUpDown.ValueChanged += new System.EventHandler(this.baudrateAdjustNumUpDown_ValueChanged);
-            // 
-            // minMaxBaudrateAdjLabel
-            // 
-            this.minMaxBaudrateAdjLabel.AutoSize = true;
-            this.minMaxBaudrateAdjLabel.Location = new System.Drawing.Point(74, 139);
-            this.minMaxBaudrateAdjLabel.Name = "minMaxBaudrateAdjLabel";
-            this.minMaxBaudrateAdjLabel.Size = new System.Drawing.Size(49, 13);
-            this.minMaxBaudrateAdjLabel.TabIndex = 47;
-            this.minMaxBaudrateAdjLabel.Text = "120..200";
-            // 
-            // baudrateAdjLabel
-            // 
-            this.baudrateAdjLabel.AutoSize = true;
-            this.baudrateAdjLabel.Location = new System.Drawing.Point(6, 139);
-            this.baudrateAdjLabel.Name = "baudrateAdjLabel";
-            this.baudrateAdjLabel.Size = new System.Drawing.Size(70, 13);
-            this.baudrateAdjLabel.TabIndex = 46;
-            this.baudrateAdjLabel.Text = "Baudrate adj.";
+            this.slowCoolingNumUpDown.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.slowCoolingNumUpDown.Name = "slowCoolingNumUpDown";
+            this.slowCoolingNumUpDown.Size = new System.Drawing.Size(51, 20);
+            this.slowCoolingNumUpDown.TabIndex = 52;
+            this.slowCoolingNumUpDown.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            65536});
             // 
             // camSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(230, 199);
-            this.Controls.Add(this.baudrateAdjustNumUpDown);
-            this.Controls.Add(this.minMaxBaudrateAdjLabel);
-            this.Controls.Add(this.baudrateAdjLabel);
+            this.ClientSize = new System.Drawing.Size(230, 238);
+            this.Controls.Add(this.slowCoolingNumUpDown);
+            this.Controls.Add(this.slowCoolingLabel);
+            this.Controls.Add(this.slowCoolingCheckBox);
+            this.Controls.Add(this.baudrateNumUpDown);
+            this.Controls.Add(this.minMaxBaudrateLabel);
+            this.Controls.Add(this.baudrateLabel);
             this.Controls.Add(this.cameraStatusLabel);
             this.Controls.Add(this.tecStatusLabel);
             this.Controls.Add(this.offsetNumUpDown);
@@ -230,6 +278,7 @@
             this.Controls.Add(this.offsetLabel);
             this.Controls.Add(this.gainLabel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.MaximizeBox = false;
             this.Name = "camSettings";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
@@ -239,7 +288,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.offsetTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.gainNumUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.offsetNumUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.baudrateAdjustNumUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.baudrateNumUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.slowCoolingNumUpDown)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -258,8 +308,11 @@
         private System.Windows.Forms.NumericUpDown offsetNumUpDown;
         private System.Windows.Forms.Label tecStatusLabel;
         private System.Windows.Forms.Label cameraStatusLabel;
-        private System.Windows.Forms.NumericUpDown baudrateAdjustNumUpDown;
-        private System.Windows.Forms.Label minMaxBaudrateAdjLabel;
-        private System.Windows.Forms.Label baudrateAdjLabel;
+        private System.Windows.Forms.NumericUpDown baudrateNumUpDown;
+        private System.Windows.Forms.Label minMaxBaudrateLabel;
+        private System.Windows.Forms.Label baudrateLabel;
+        private System.Windows.Forms.CheckBox slowCoolingCheckBox;
+        private System.Windows.Forms.Label slowCoolingLabel;
+        private System.Windows.Forms.NumericUpDown slowCoolingNumUpDown;
     }
 }

@@ -29,9 +29,9 @@ namespace ASCOM.cam8_v09
             InitializeComponent();
         }
 
-        private short pGain = 0;
-        private short pOffset = 0;
-        private short pBaudrate = 0;
+        private short pGain = minGain;
+        private short pOffset = minOffset;
+        private short pBaudrate = minBaudrate;
 
         public short gain
         {

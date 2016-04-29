@@ -15,8 +15,10 @@ namespace ASCOM.cam8s_v10
         const short maxGain = 63;
         const short minOffset = -127;
         const short maxOffset = 127;
-        const short minBlevel = 0;
-        const short maxBlevel = 255;
+        const short minBaudrate = 50;
+        const short maxBaudrate = 300;
+        const short minCoolingSpeed = 1;
+        const short maxCoolingSpeed = 20;
 
         const short CameraStatusOperational = 0;
         const short CameraStatusWarning = 1;
@@ -27,8 +29,9 @@ namespace ASCOM.cam8s_v10
             InitializeComponent();
         }
 
-        private short pGain = 0;
-        private short pOffset = 0;
+        private short pGain = minGain;
+        private short pOffset = minOffset;
+        private short pBaudrate = minBaudrate;
 
         public short gain
         {
@@ -65,6 +68,23 @@ namespace ASCOM.cam8s_v10
             }
         }
 
+        public short baudrate
+        {
+            get
+            {
+                return pBaudrate;
+            }
+            set
+            {
+                if ((value >= minBaudrate) && (value <= maxBaudrate))
+                {
+                    pBaudrate = value;
+                    this.baudrateNumUpDown.Value = pBaudrate;
+                }
+                else throw new ASCOM.InvalidValueException("cam_settings, baudrate");
+            }
+        }
+
         public string tecStatus
         {
             set
@@ -82,6 +102,34 @@ namespace ASCOM.cam8s_v10
             set
             {
                 onTopCheckBox.Checked = value;
+            }
+        }
+
+        public bool slowCoolingEnabled
+        {
+            get
+            {
+                return slowCoolingCheckBox.Checked;
+            }
+            set
+            {
+                slowCoolingCheckBox.Checked = value;
+            }
+        }
+
+        public short slowCoolingSpeed
+        {
+            get
+            {
+                return (short) (((double)slowCoolingNumUpDown.Value) * 10.0);
+            }
+            set
+            {                
+                if ((value >= minCoolingSpeed) && (value <= maxCoolingSpeed))
+                {
+                    slowCoolingNumUpDown.Value = (decimal) (value / 10.0);
+                }
+                else throw new ASCOM.InvalidValueException("cam_settings, coolingSpeed");
             }
         }
 
@@ -143,5 +191,6 @@ namespace ASCOM.cam8s_v10
         {
             e.Cancel = true;
         }
+
     }
 }

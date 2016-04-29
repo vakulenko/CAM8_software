@@ -102,7 +102,7 @@ Function Read_USB_Device_Buffer(var FT:DWord;Read_Count:Integer) : Integer;
 Function Write_USB_Device_Buffer(var FT:DWord; p:pointer; Write_Count:Integer) : Integer;
 Function Write_USB_Device_Buffer_wErr(var FT:DWord; p:pointer; Write_Count:Integer) : Boolean;
 Function Reset_USB_Device : FT_Result;
-Function Set_USB_Device_BaudRate : FT_Result;
+Function Set_USB_Device_BaudRate(var FT:DWord) : FT_Result;
 Function Set_USB_Device_BaudRate_Divisor(Divisor:Dword) : FT_Result;
 Function Set_USB_Device_DataCharacteristics : FT_Result;
 Function Set_USB_Device_FlowControl : FT_Result;
@@ -538,6 +538,7 @@ else Res:=false;
 Result := Res;
 End;
 
+
 Function Reset_USB_Device : FT_Result;
 Begin
 Result :=  FT_ResetDevice(FT_Handle);
@@ -545,9 +546,9 @@ If Result <> FT_OK then FT_Error_Report('FT_ResetDevice',Result);
 End;
 
 
-Function Set_USB_Device_BaudRate : FT_Result;
+Function Set_USB_Device_BaudRate(var FT:DWord) : FT_Result;
 Begin
-Result :=  FT_SetBaudRate(FT_Handle,FT_Current_Baud);
+Result :=  FT_SetBaudRate(FT,FT_Current_Baud);
 If Result <> FT_OK then FT_Error_Report('FT_SetBaudRate',Result);
 End;
 

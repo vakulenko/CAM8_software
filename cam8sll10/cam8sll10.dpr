@@ -87,6 +87,9 @@ zatv:byte;
 //error Flag
 errorReadFlag : boolean;
 errorWriteFlag : boolean;
+//speed
+spusb : longint;
+ms1 : longint;
 
 // ????????? ????????? ?????? ? FT2232LH.
 //?????? ???????????? ????? ?????:
@@ -376,7 +379,7 @@ begin
     begin
       shift3;
       for y:=0 to expoz-52 do
-      for x:=0 to 416 do
+      for x:=0 to ms1-1 do
         HC595($cf);
     end;
     clearline2;
@@ -388,7 +391,7 @@ begin
     shift3;
     if expoz > 0 then
       for y:=0 to expoz do
-        for x:=0 to 416 do
+        for x:=0 to ms1-1 do
           HC595($cf);
   end;
   shift2;
@@ -560,9 +563,13 @@ begin
   begin
       // BitMode
       if Set_USB_Device_BitMode(FT_CAM8B,$ff, $01)  <> FT_OK then FT_OP_flag := false;
-  end;
+      spusb := 1600000;
+      ms1 := spusb div 8000;
+      FT_Current_Baud := spusb;
+    end;
   if (FT_OP_flag) then
   begin
+    Set_USB_Device_BaudRate(FT_CAM8B);
     //???????????? ??????????????
     Set_USB_Device_LatencyTimer(FT_CAM8B,2);
     Set_USB_Device_LatencyTimer(FT_CAM8A,2);
@@ -706,6 +713,21 @@ begin
   Result:=res;
 end;
 
+//Set camera baudrate, return bool result
+function cameraSetBaudrate(val : integer) : WordBool; stdcall; export;
+begin
+  //setup FT2232 baud rate
+  if (val>=50) and (val<=300) then
+  begin
+    spusb := val*10000;
+    ms1 := spusb div 8000;
+    FT_Current_Baud := spusb;
+    Set_USB_Device_BaudRate(FT_CAM8B); 
+    Result := true;
+  end
+  else Result := false;
+end;
+
 exports cameraConnect;
 exports cameraDisconnect;
 exports cameraIsConnected;
@@ -717,6 +739,7 @@ exports cameraGetImage;
 exports cameraSetGain;
 exports cameraSetOffset;
 exports cameraGetError;
+exports cameraSetBaudrate;
 
 begin
 
