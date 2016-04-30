@@ -1418,7 +1418,7 @@ namespace ASCOM.cam85_v03
                         throw new InvalidValueException("SetCCDTemperature Set", value.ToString(), "SetCCDTemperature must be in range [-50;50]");
                     }
 
-                    if (settingsForm.slowCoolingEnabled)
+                    if ((settingsForm.slowCoolingEnabled) && (this.CoolerOn))
                     {
                         tl.LogMessage("SetCCDTemperature Set", "start slow cooling with step size=" + (settingsForm.slowCoolingSpeed / 10.0).ToString());
                         slowCoolingTarger = value;
