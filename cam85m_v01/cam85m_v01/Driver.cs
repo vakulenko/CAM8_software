@@ -382,29 +382,29 @@ namespace ASCOM.cam85m_v01
         private const string LowLevelDLL = "cam85mll01.dll";
 
         //Imports cam85ll03.dll functions
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraConnect();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraDisconnect();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraIsConnected();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraStartExposure(int Bin, int StartX, int StartY, int NumX, int NumY, double Duration, bool light);
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraStopExposure();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int cameraGetCameraState();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraGetImageReady();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern uint cameraGetImage();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraSetGain(int val);
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraSetOffset(int val);
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern int cameraGetError();
-        [DllImport("cam85mll01.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+        [DllImport(LowLevelDLL, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
         static extern bool cameraSetBaudrate(int val);
 
         /// <summary>
