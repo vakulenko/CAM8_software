@@ -192,5 +192,10 @@ namespace ASCOM.cam8s_v10
             e.Cancel = true;
         }
 
+        private void baudrateNumUpDown_ValueChanged(object sender, EventArgs e)
+        {
+            baudrate = (short)baudrateNumUpDown.Value;
+        }
+
     }
 }
