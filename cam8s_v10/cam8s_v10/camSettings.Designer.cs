@@ -58,7 +58,7 @@
             this.gainTrackBar.Location = new System.Drawing.Point(6, 25);
             this.gainTrackBar.Maximum = 63;
             this.gainTrackBar.Name = "gainTrackBar";
-            this.gainTrackBar.Size = new System.Drawing.Size(219, 45);
+            this.gainTrackBar.Size = new System.Drawing.Size(219, 42);
             this.gainTrackBar.TabIndex = 36;
             this.gainTrackBar.Scroll += new System.EventHandler(this.GainTrackBar_Scroll);
             // 
@@ -68,7 +68,7 @@
             this.offsetTrackBar.Maximum = 127;
             this.offsetTrackBar.Minimum = -127;
             this.offsetTrackBar.Name = "offsetTrackBar";
-            this.offsetTrackBar.Size = new System.Drawing.Size(219, 45);
+            this.offsetTrackBar.Size = new System.Drawing.Size(219, 42);
             this.offsetTrackBar.TabIndex = 35;
             this.offsetTrackBar.Scroll += new System.EventHandler(this.OffsetTrackBar_Scroll);
             // 
@@ -189,6 +189,7 @@
             0,
             0,
             0});
+            this.baudrateNumUpDown.ValueChanged += new System.EventHandler(this.baudrateNumUpDown_ValueChanged);
             // 
             // minMaxBaudrateLabel
             // 

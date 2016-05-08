@@ -156,7 +156,7 @@ namespace ASCOM.cam85_v03
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ASCOM cam85 v.0.2 driver setup";
+            this.Text = "ASCOM cam85 v.0.3 driver setup";
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).EndInit();
             this.coolerGroupBox.ResumeLayout(false);
             this.coolerGroupBox.PerformLayout();
