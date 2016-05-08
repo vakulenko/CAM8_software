@@ -718,7 +718,7 @@ end;
 function cameraSetBaudrate(val : integer) : WordBool; stdcall; export;
 begin
   //setup FT2232 baud rate
-  if (val>=50) and (val<=300) then
+  if (val>=80) and (val<=240) then
   begin
     spusb := val*10000;
     ms1 := spusb div 8000;

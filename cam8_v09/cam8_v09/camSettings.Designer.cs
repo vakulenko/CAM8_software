@@ -172,12 +172,12 @@
             // 
             this.baudrateNumUpDown.Location = new System.Drawing.Point(103, 138);
             this.baudrateNumUpDown.Maximum = new decimal(new int[] {
-            300,
+            240,
             0,
             0,
             0});
             this.baudrateNumUpDown.Minimum = new decimal(new int[] {
-            50,
+            80,
             0,
             0,
             0});
@@ -198,7 +198,7 @@
             this.minMaxBaudrateLabel.Name = "minMaxBaudrateLabel";
             this.minMaxBaudrateLabel.Size = new System.Drawing.Size(43, 13);
             this.minMaxBaudrateLabel.TabIndex = 47;
-            this.minMaxBaudrateLabel.Text = "50..300";
+            this.minMaxBaudrateLabel.Text = "80..240";
             // 
             // baudrateLabel
             // 

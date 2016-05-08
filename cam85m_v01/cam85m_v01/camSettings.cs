@@ -15,8 +15,8 @@ namespace ASCOM.cam85m_v01
         const short maxGain = 63;
         const short minOffset = -127;
         const short maxOffset = 127;
-        const short minBaudrate = 50;
-        const short maxBaudrate = 300;
+        const short minBaudrate = 80;
+        const short maxBaudrate = 240;
         const short minCoolingSpeed = 1;
         const short maxCoolingSpeed = 20;
 
