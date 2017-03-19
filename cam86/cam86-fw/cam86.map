@@ -1,0 +1,34 @@
+RAM Allocation
+Variable                                                          Address   Size
+--------------------------------------------------------------------------------
+y0                                                                0500h        2
+dy                                                                0502h        2
+command                                                           0504h        1
+parcom                                                            0505h        2
+expoz                                                             0507h        2
+bining                                                            0509h        1
+buf                                                               050Ah        1
+temp                                                              050Bh        2
+porog                                                             050Dh        2
+fcol                                                              050Fh        2
+ctemp                                                             0511h        2
+contr                                                             0513h        1
+iteg                                                              0514h        2
+
+EEPROM Allocation
+Variable                                                          Address   Size
+--------------------------------------------------------------------------------
+
+Register Allocation
+Variable                                                          Register  Size
+--------------------------------------------------------------------------------
+k0                                                                R5           1
+k1                                                                R4           1
+k2                                                                R7           1
+k3                                                                R6           1
+k4                                                                R9           1
+k5                                                                R8           1
+k6                                                                R11          1
+k7                                                                R10          1
+k8                                                                R13          1
+ind                                                               R12          1
